@@ -1,36 +1,131 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+<h1 align="center">poke.community</h1>
+
+Community hub for sharing and discovering automations built with [Poke](https://poke.com). Makers can publish their workflows, the community can vote and discuss, and subscribers get notified whenever something new or trending drops. This project is not affiliated with poke or Interaction Company.
+
+## Features
+
+- Email-based authentication with Supabase (Google sign-in coming later)
+- Publish Poke automations with descriptions, prompts, setup notes, and tags
+- Upvote / downvote system with trending leaderboard
+- Searchable index of every automation
+- Subscription preferences for new drops or weekly trending digests, powered by Resend
+- Modern interface built with Next.js App Router, Tailwind CSS, and shadcn/ui components
+
+## Tech Stack
+
+- Next.js 15 (App Router, Server Actions)
+- TypeScript + ESLint
+- Tailwind CSS v4 + shadcn/ui
+- Supabase (Postgres, Auth, RLS)
+- Resend for transactional email
 
 ## Getting Started
 
-First, run the development server:
+1. Install dependencies:
+
+   ```bash
+   npm install
+   ```
+
+2. Copy the environment template and fill in your keys:
+
+   ```bash
+   cp .env.local.example .env.local
+   ```
+
+   Required variables:
+
+   - `NEXT_PUBLIC_SITE_URL` – base URL of the deployed site (e.g. http://localhost:3000)
+   - `NEXT_PUBLIC_SUPABASE_URL` – Supabase project URL
+   - `NEXT_PUBLIC_SUPABASE_ANON_KEY` – Supabase anon key
+   - `SUPABASE_SERVICE_ROLE_KEY` – service role key (used server-side to refresh vote totals & email subscribers)
+   - `RESEND_API_KEY` – API key from Resend
+
+3. Set up Supabase locally (see the next section) or point the environment variables to a hosted project.
+
+4. Start the dev server:
+
+   ```bash
+   npm run dev
+   ```
+
+5. Visit [http://localhost:3000](http://localhost:3000) and sign in with an email magic link.
+
+Run linting any time with `npm run lint`.
+
+## Local Supabase
+
+This repo ships with Supabase CLI configuration, migrations, and seeds so you can run the full stack locally without manual setup.
+
+1. Install the [Supabase CLI](https://supabase.com/docs/guides/cli/getting-started) and ensure Docker is running.
+2. Start the local stack:
+
+   ```bash
+   npm run supabase:start
+   ```
+
+3. Apply migrations and seed data (can be rerun any time):
+
+   ```bash
+   npm run supabase:reset
+   ```
+
+   This runs the SQL files from `supabase/migrations` and `supabase/seed.sql`, giving you demo users, three automations, historical votes, and subscription preferences that match the mock data used in tests.
+
+4. Update `.env.local` with the local credentials output by the CLI (typically `http://127.0.0.1:54321` plus the anon and service role keys located in `supabase/.branches/main/.env`).
+
+5. Restart the Next.js dev server so it picks up the new environment variables.
+
+## Seed Data
+
+The CLI command `npm run supabase:reset` loads `supabase/seed.sql`, which creates:
+
+- Two demo users (`ava@poke.community` and `liam@poke.community`) with corresponding profiles
+- Three automations with descriptions, tags, and vote totals
+- Vote history for the past week so trending calculations have signal
+- Notification preferences for "new automation" and "trending" digests
+
+These records align with the mock data used by the test suite so what you see locally matches what the Playwright scenarios expect.
+
+## Email (Resend)
+
+Add your Resend API key to `.env.local`. By default, emails are sent from `updates@poke.community`. Update the sender address in `src/lib/email/subscriptions.ts` if you plan to use a different verified domain. Two helper functions are available:
+
+- `sendAutomationAnnouncement` – called automatically when a new automation is published to announce it to subscribers who opted into "New automation" updates.
+- `sendTrendingDigest` – utility you can wire up to a scheduled job to send a weekly digest to users who opted into "Trending" updates.
+
+## Testing
+
+Unit tests run with Jest (using mocked data) and end-to-end flows run with Playwright against a dev server configured in mock data mode.
 
 ```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+npm run test:unit
+npm run test:e2e
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+The first time you run Playwright you may need to install browser binaries:
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+```bash
+npx playwright install
+```
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+To execute everything in one shot use `npm run test`. Tests automatically set `NEXT_PUBLIC_DATA_MODE=mock`, so no Supabase instance is required for the suite.
 
-## Learn More
+## Development Notes
 
-To learn more about Next.js, take a look at the following resources:
+- Votes, submissions, and subscription toggles require authentication. Attempting an action while signed out redirects you to the email sign-in page.
+- Descriptions accept Markdown and are rendered with `react-markdown` on detail pages.
+- Trending automations are calculated from votes over the last 7 days using the `automations_with_scores` view.
+- The dashboard allows users to opt in or out of Resend-powered notifications at any time.
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+## Roadmap Ideas
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+- Add Google sign-in alongside email magic links
+- Surface comments or discussion threads per automation
+- Allow creators to edit or archive their automations directly from the UI
+- Integrate webhook-driven Resend digests (cron job) for trending automations
+- Add tagging filters and collections once real data arrives
 
-## Deploy on Vercel
+---
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+poke.community is a community-driven showcase and is not affiliated with poke or Interaction Company.

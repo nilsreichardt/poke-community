@@ -1,103 +1,108 @@
-import Image from "next/image";
+import Link from "next/link";
+import { Button } from "@/components/ui/button";
+import { AutomationCard } from "@/components/automation/automation-card";
+import {
+  getAutomations,
+  getTrendingAutomations,
+} from "@/lib/data/automations";
 
-export default function Home() {
+export default async function Home() {
+  const [trending, latest] = await Promise.all([
+    getTrendingAutomations(4),
+    getAutomations({ limit: 6, orderBy: "new" }),
+  ]);
+
   return (
-    <div className="font-sans grid grid-rows-[20px_1fr_20px] items-center justify-items-center min-h-screen p-8 pb-20 gap-16 sm:p-20">
-      <main className="flex flex-col gap-[32px] row-start-2 items-center sm:items-start">
-        <Image
-          className="dark:invert"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={180}
-          height={38}
-          priority
-        />
-        <ol className="font-mono list-inside list-decimal text-sm/6 text-center sm:text-left">
-          <li className="mb-2 tracking-[-.01em]">
-            Get started by editing{" "}
-            <code className="bg-black/[.05] dark:bg-white/[.06] font-mono font-semibold px-1 py-0.5 rounded">
-              src/app/page.tsx
-            </code>
-            .
-          </li>
-          <li className="tracking-[-.01em]">
-            Save and see your changes instantly.
-          </li>
-        </ol>
+    <div className="space-y-16">
+      <HeroSection />
 
-        <div className="flex gap-4 items-center flex-col sm:flex-row">
-          <a
-            className="rounded-full border border-solid border-transparent transition-colors flex items-center justify-center bg-foreground text-background gap-2 hover:bg-[#383838] dark:hover:bg-[#ccc] font-medium text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5 sm:w-auto"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className="dark:invert"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={20}
-              height={20}
-            />
-            Deploy now
-          </a>
-          <a
-            className="rounded-full border border-solid border-black/[.08] dark:border-white/[.145] transition-colors flex items-center justify-center hover:bg-[#f2f2f2] dark:hover:bg-[#1a1a1a] hover:border-transparent font-medium text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5 w-full sm:w-auto md:w-[158px]"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Read our docs
-          </a>
+      <section className="space-y-6">
+        <div className="flex items-center justify-between">
+          <div>
+            <h2 className="text-xl font-semibold">Trending this week</h2>
+            <p className="text-sm text-muted-foreground">
+              Automations getting the most love right now.
+            </p>
+          </div>
+          <Button asChild variant="outline">
+            <Link href="/automations?sort=top">See leaderboard</Link>
+          </Button>
         </div>
-      </main>
-      <footer className="row-start-3 flex gap-[24px] flex-wrap items-center justify-center">
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/file.svg"
-            alt="File icon"
-            width={16}
-            height={16}
-          />
-          Learn
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/window.svg"
-            alt="Window icon"
-            width={16}
-            height={16}
-          />
-          Examples
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/globe.svg"
-            alt="Globe icon"
-            width={16}
-            height={16}
-          />
-          Go to nextjs.org →
-        </a>
-      </footer>
+        {trending.length ? (
+          <div className="grid gap-6 md:grid-cols-2">
+            {trending.map((automation) => (
+              <AutomationCard key={automation.id} automation={automation} />
+            ))}
+          </div>
+        ) : (
+          <EmptyState message="No trending automations yet. Share your favorite Poke workflow to kick things off!" />
+        )}
+      </section>
+
+      <section className="space-y-6">
+        <div className="flex items-center justify-between">
+          <div>
+            <h2 className="text-xl font-semibold">Latest drops</h2>
+            <p className="text-sm text-muted-foreground">
+              Fresh automations from the community.
+            </p>
+          </div>
+          <Button asChild>
+            <Link href="/automations">Browse all</Link>
+          </Button>
+        </div>
+        {latest.length ? (
+          <div className="grid gap-6 md:grid-cols-2">
+            {latest.map((automation) => (
+              <AutomationCard key={automation.id} automation={automation} />
+            ))}
+          </div>
+        ) : (
+          <EmptyState message="No automations posted yet. Be the first to publish one!" />
+        )}
+      </section>
+    </div>
+  );
+}
+
+function HeroSection() {
+  return (
+    <section className="overflow-hidden rounded-2xl border border-border bg-gradient-to-br from-primary/10 via-background to-secondary/40 p-10 sm:p-12">
+      <div className="flex flex-col gap-8 lg:flex-row lg:items-center">
+        <div className="max-w-xl space-y-6">
+          <p className="inline-flex items-center rounded-full bg-primary/10 px-3 py-1 text-xs font-semibold uppercase tracking-wide text-primary">
+            Community launch
+          </p>
+          <h1 className="text-4xl font-semibold tracking-tight sm:text-5xl">
+            Discover, share, and level up your Poke automations.
+          </h1>
+          <p className="text-base text-muted-foreground sm:text-lg">
+            poke.community is where builders publish their best automations,
+            vote on what&apos;s hot, and stay up to date with the latest Poke
+            workflows. Built by the community, for the community.
+          </p>
+          <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
+            <Button size="lg" asChild>
+              <Link href="/submit">Share an automation</Link>
+            </Button>
+            <Button size="lg" variant="outline" asChild>
+              <Link href="/automations">Browse automations</Link>
+            </Button>
+          </div>
+          <p className="text-xs text-muted-foreground">
+            poke.community is an independent project and not affiliated with
+            poke or Interaction Company.
+          </p>
+        </div>
+      </div>
+    </section>
+  );
+}
+
+function EmptyState({ message }: { message: string }) {
+  return (
+    <div className="rounded-lg border border-dashed border-border/70 bg-muted/30 p-8 text-sm text-muted-foreground">
+      {message}
     </div>
   );
 }
