@@ -6,7 +6,19 @@ import {
   getTrendingAutomations,
 } from "@/lib/data/automations";
 
+const isProduction = process.env.NODE_ENV === "production";
+
 export default async function Home() {
+  if (isProduction) {
+    return (
+      <main className="flex flex-col items-center justify-center min-h-[calc(100vh-5rem)]">
+        <div className="w-full">
+          <LandingHeroSection />
+        </div>
+      </main>
+    );
+  }
+
   const [trending, latest] = await Promise.all([
     getTrendingAutomations(4),
     getAutomations({ limit: 6, orderBy: "new" }),
@@ -70,16 +82,11 @@ function HeroSection() {
     <section className="overflow-hidden rounded-2xl border border-border bg-gradient-to-br from-primary/10 via-background to-secondary/40 p-10 sm:p-12">
       <div className="flex flex-col gap-8 lg:flex-row lg:items-center">
         <div className="max-w-xl space-y-6">
-          <p className="inline-flex items-center rounded-full bg-primary/10 px-3 py-1 text-xs font-semibold uppercase tracking-wide text-primary">
-            Community launch
-          </p>
           <h1 className="text-4xl font-semibold tracking-tight sm:text-5xl">
-            Discover, share, and level up your Poke automations.
+            Discover & Share Poke Automations
           </h1>
           <p className="text-base text-muted-foreground sm:text-lg">
-            poke.community is where builders publish their best automations,
-            vote on what&apos;s hot, and stay up to date with the latest Poke
-            workflows. Built by the community, for the community.
+            Don’t rely on luck to find great automations on X. Explore, share, and follow the best Poke automations — and get notified when new ones start trending.
           </p>
           <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
             <Button size="lg" asChild>
@@ -90,8 +97,47 @@ function HeroSection() {
             </Button>
           </div>
           <p className="text-xs text-muted-foreground">
-            poke.community is an independent project and not affiliated with
-            poke or Interaction Company.
+            poke.community is an independent project and is not affiliated with or endorsed by{" "}
+            <Link href="https://poke.com" target="_blank" rel="noopener noreferrer" className="hover:underline">
+              Poke
+            </Link>{" "}
+            or{" "}
+            <Link href="https://interaction.co/about" target="_blank" rel="noopener noreferrer" className="hover:underline">
+              The Interaction Company of California
+            </Link>
+            .
+          </p>
+        </div>
+      </div>
+    </section>
+  );
+}
+
+function LandingHeroSection() {
+  return (
+    <section className="overflow-hidden rounded-2xl border border-border bg-gradient-to-br from-primary/10 via-background to-secondary/40 p-10 sm:p-12">
+      <div className="flex flex-col gap-8 lg:flex-row lg:items-center">
+        <div className="max-w-xl space-y-6">
+          <p className="inline-flex items-center rounded-full bg-primary/10 px-3 py-1 text-xs font-semibold uppercase tracking-wide text-primary">
+            poke.community
+          </p>
+          <h1 className="text-4xl font-semibold tracking-tight sm:text-5xl">
+            Discover & Share Poke Automations
+          </h1>
+          <p className="text-base text-muted-foreground sm:text-lg">
+            Don’t rely on luck to find great automations on X. Explore, share, and follow the best Poke automations — and get notified when new ones start trending.
+          </p>
+          <p className="text-sm font-medium text-primary">More coming soon.</p>
+          <p className="text-xs text-muted-foreground">
+            poke.community is an independent project and is not affiliated with or endorsed by{" "}
+            <Link href="https://poke.com" target="_blank" rel="noopener noreferrer" className="hover:underline">
+              Poke
+            </Link>{" "}
+            or{" "}
+            <Link href="https://interaction.co/about" target="_blank" rel="noopener noreferrer" className="hover:underline">
+              The Interaction Company of California
+            </Link>
+            .
           </p>
         </div>
       </div>

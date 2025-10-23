@@ -16,11 +16,17 @@ const navigation = [
   { href: "/dashboard", label: "Dashboard" },
 ];
 
+const isProduction = process.env.NODE_ENV === "production";
+
 export function SiteHeader() {
   const pathname = usePathname();
   const searchParams = useSearchParams();
   const { session } = useSupabase();
   const redirectTarget = buildRedirectTarget(pathname, searchParams);
+
+  if (isProduction) {
+    return null;
+  }
 
   return (
     <header className="border-b border-border bg-background/80 backdrop-blur">
@@ -38,9 +44,8 @@ export function SiteHeader() {
               <Link
                 key={item.href}
                 href={item.href}
-                className={`transition hover:text-primary ${
-                  isActive ? "text-primary" : "text-muted-foreground"
-                }`}
+                className={`transition hover:text-primary ${isActive ? "text-primary" : "text-muted-foreground"
+                  }`}
               >
                 {item.label}
               </Link>
