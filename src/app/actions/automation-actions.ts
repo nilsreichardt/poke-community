@@ -105,7 +105,6 @@ export async function requestGoogleSignIn(
     callbackUrl.searchParams.set("redirectTo", redirectTo);
   }
 
-  console.log("callbackUrl", callbackUrl.toString());
   const { data, error } = await supabase.auth.signInWithOAuth({
     provider: "google",
     options: {
