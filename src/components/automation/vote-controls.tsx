@@ -71,6 +71,7 @@ export function VoteControls({
         onClick={() => handleVote(1)}
         disabled={isPending}
         aria-label="Upvote automation"
+        className="cursor-pointer"
       >
         <ArrowBigUp className="h-5 w-5" />
       </Button>
@@ -84,6 +85,7 @@ export function VoteControls({
         onClick={() => handleVote(-1)}
         disabled={isPending}
         aria-label="Downvote automation"
+        className="cursor-pointer"
       >
         <ArrowBigDown className="h-5 w-5" />
       </Button>
