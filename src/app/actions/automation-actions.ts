@@ -40,17 +40,17 @@ const updateProfileNameSchema = z.object({
     .transform((value) => value.trim())
     .refine(
       (value) => value.length === 0 || value.length >= 2,
-      "Name must be at least 2 characters or left blank."
+      "Name must be at least 2 characters or left blank.",
     )
     .refine(
       (value) => value.length <= 80,
-      "Name must be 80 characters or fewer."
+      "Name must be 80 characters or fewer.",
     ),
 });
 
 export async function requestPasswordSignIn(
   _prevState: AuthFormState,
-  formData: FormData
+  formData: FormData,
 ): Promise<AuthFormState> {
   const parseResult = passwordSignInSchema.safeParse({
     email: formData.get("email"),
@@ -92,25 +92,20 @@ export async function requestPasswordSignIn(
 
 export async function requestGoogleSignIn(
   _prevState: AuthFormState,
-  formData: FormData
+  formData: FormData,
 ): Promise<AuthFormState> {
   const redirectTo = parseRedirectFormValue(formData.get("redirectTo"));
   const supabase = await createSupabaseServerClient("mutate");
   const headersList = await headers();
 
-  const origin =
-    headersList.get("origin") ??
-    process.env.NEXT_PUBLIC_SITE_URL ??
-    (process.env.VERCEL_URL
-      ? `https://${process.env.VERCEL_URL}`
-      : "http://localhost:3000");
-
+  const origin = headersList.get("origin") ?? process.env.NEXT_PUBLIC_SITE_URL;
   const callbackUrl = new URL("/auth/callback", origin);
 
   if (redirectTo && redirectTo !== "/") {
     callbackUrl.searchParams.set("redirectTo", redirectTo);
   }
 
+  console.log("callbackUrl", callbackUrl.toString());
   const { data, error } = await supabase.auth.signInWithOAuth({
     provider: "google",
     options: {
@@ -147,7 +142,7 @@ export async function signOutAction(formData: FormData) {
 
 export async function updateProfileNameAction(
   _prevState: UpdateNameFormState,
-  formData: FormData
+  formData: FormData,
 ): Promise<UpdateNameFormState> {
   const user = await getCurrentUser();
 
@@ -211,16 +206,18 @@ export async function deleteAccountAction() {
   const serviceClient = createSupabaseServiceRoleClient();
   const supabase = await createSupabaseServerClient("mutate");
 
-  const { data: automationRows, error: automationQueryError } = await serviceClient
-    .from("automations")
-    .select("id")
-    .eq("user_id", user.id);
+  const { data: automationRows, error: automationQueryError } =
+    await serviceClient.from("automations").select("id").eq("user_id", user.id);
 
   if (automationQueryError) {
-    throw new Error(`Unable to fetch automations for deletion: ${automationQueryError.message}`);
+    throw new Error(
+      `Unable to fetch automations for deletion: ${automationQueryError.message}`,
+    );
   }
 
-  const automationIds = (automationRows ?? []).map((automation) => automation.id);
+  const automationIds = (automationRows ?? []).map(
+    (automation) => automation.id,
+  );
 
   if (automationIds.length > 0) {
     const { error: deleteAutomationVotesError } = await serviceClient
@@ -229,7 +226,9 @@ export async function deleteAccountAction() {
       .in("automation_id", automationIds);
 
     if (deleteAutomationVotesError) {
-      throw new Error(`Unable to remove votes for your automations: ${deleteAutomationVotesError.message}`);
+      throw new Error(
+        `Unable to remove votes for your automations: ${deleteAutomationVotesError.message}`,
+      );
     }
   }
 
@@ -239,7 +238,9 @@ export async function deleteAccountAction() {
     .eq("user_id", user.id);
 
   if (deleteUserVotesError) {
-    throw new Error(`Unable to remove your votes: ${deleteUserVotesError.message}`);
+    throw new Error(
+      `Unable to remove your votes: ${deleteUserVotesError.message}`,
+    );
   }
 
   const { error: deleteSubscriptionsError } = await serviceClient
@@ -248,7 +249,9 @@ export async function deleteAccountAction() {
     .eq("user_id", user.id);
 
   if (deleteSubscriptionsError) {
-    throw new Error(`Unable to remove your subscriptions: ${deleteSubscriptionsError.message}`);
+    throw new Error(
+      `Unable to remove your subscriptions: ${deleteSubscriptionsError.message}`,
+    );
   }
 
   if (automationIds.length > 0) {
@@ -258,7 +261,9 @@ export async function deleteAccountAction() {
       .in("id", automationIds);
 
     if (deleteAutomationsError) {
-      throw new Error(`Unable to delete your automations: ${deleteAutomationsError.message}`);
+      throw new Error(
+        `Unable to delete your automations: ${deleteAutomationsError.message}`,
+      );
     }
   }
 
@@ -268,13 +273,18 @@ export async function deleteAccountAction() {
     .eq("id", user.id);
 
   if (deleteProfileError) {
-    throw new Error(`Unable to delete your profile: ${deleteProfileError.message}`);
+    throw new Error(
+      `Unable to delete your profile: ${deleteProfileError.message}`,
+    );
   }
 
-  const { error: deleteAuthUserError } = await serviceClient.auth.admin.deleteUser(user.id);
+  const { error: deleteAuthUserError } =
+    await serviceClient.auth.admin.deleteUser(user.id);
 
   if (deleteAuthUserError) {
-    throw new Error(`Unable to delete your account: ${deleteAuthUserError.message}`);
+    throw new Error(
+      `Unable to delete your account: ${deleteAuthUserError.message}`,
+    );
   }
 
   const { error: signOutError } = await supabase.auth.signOut();
@@ -291,7 +301,7 @@ export async function deleteAccountAction() {
 
 export async function createAutomationAction(
   _prevState: AutomationFormState,
-  formData: FormData
+  formData: FormData,
 ): Promise<AutomationFormState> {
   const submittedValues = formDataToAutomationFormValues(formData);
   const validation = validateAutomationForm(submittedValues);
@@ -371,7 +381,7 @@ export async function createAutomationAction(
 
 export async function updateAutomationAction(
   _prevState: AutomationFormState,
-  formData: FormData
+  formData: FormData,
 ): Promise<AutomationFormState> {
   const automationId = formData.get("automationId");
   const submittedValues = formDataToAutomationFormValues(formData);
@@ -486,10 +496,7 @@ export async function updateAutomationAction(
   };
 }
 
-export async function toggleVoteAction(
-  automationId: string,
-  value: 1 | -1
-) {
+export async function toggleVoteAction(automationId: string, value: 1 | -1) {
   const user = await getCurrentUser();
 
   if (!user) {
@@ -602,7 +609,7 @@ export async function deleteAutomationAction(formData: FormData) {
 
 export async function toggleSubscriptionAction(
   type: SubscriptionType,
-  active: boolean
+  active: boolean,
 ) {
   const user = await getCurrentUser();
 
@@ -633,7 +640,7 @@ export async function toggleSubscriptionAction(
 
     if (updateError) {
       throw new Error(
-        `Unable to update subscription preference: ${updateError.message}`
+        `Unable to update subscription preference: ${updateError.message}`,
       );
     }
   } else if (active) {
@@ -645,7 +652,7 @@ export async function toggleSubscriptionAction(
 
     if (insertError) {
       throw new Error(
-        `Unable to create subscription preference: ${insertError.message}`
+        `Unable to create subscription preference: ${insertError.message}`,
       );
     }
   }
@@ -698,10 +705,7 @@ async function refreshVoteTotals(automationId: string) {
   const voteRows = (data ?? []) as {
     value: number;
   }[];
-  const voteTotal = voteRows.reduce(
-    (sum, vote) => sum + vote.value,
-    0
-  );
+  const voteTotal = voteRows.reduce((sum, vote) => sum + vote.value, 0);
 
   const { error: updateError } = await supabase
     .from("automations")

@@ -6,6 +6,7 @@ import { SupabaseProvider } from "@/components/providers/supabase-provider";
 import { SiteHeader } from "@/components/layout/site-header";
 import { SiteFooter } from "@/components/layout/site-footer";
 import { metadataBaseUrl, siteMetadata, absoluteUrl } from "@/lib/seo";
+import { getCurrentUser } from "@/lib/data/automations";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -53,17 +54,19 @@ export const metadata: Metadata = {
   },
 };
 
-export default function RootLayout({
+export default async function RootLayout({
   children,
 }: Readonly<{
   children: React.ReactNode;
 }>) {
+  const user = await getCurrentUser();
+
   return (
     <html lang="en" suppressHydrationWarning>
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
       >
-        <SupabaseProvider initialUser={null}>
+        <SupabaseProvider key={user?.id ?? "anonymous"} initialUser={user}>
           <div className="flex min-h-screen flex-col bg-background text-foreground">
             <Suspense fallback={null}>
               <SiteHeader />

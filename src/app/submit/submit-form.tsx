@@ -77,26 +77,26 @@ export function AutomationForm() {
 
   const handleChange =
     (field: keyof AutomationFormValues) =>
-    (event: ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
-      const value = event.target.value;
-      setTouchedFields((prev) => ({
-        ...prev,
-        [field]: true,
-      }));
-      setFormValues((prev) => {
-        const next = {
+      (event: ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+        const value = event.target.value;
+        setTouchedFields((prev) => ({
           ...prev,
-          [field]: value,
-        };
-        const validation = validateAutomationForm(next);
-        setFieldErrors(validation.fieldErrors);
-        return next;
-      });
+          [field]: true,
+        }));
+        setFormValues((prev) => {
+          const next = {
+            ...prev,
+            [field]: value,
+          };
+          const validation = validateAutomationForm(next);
+          setFieldErrors(validation.fieldErrors);
+          return next;
+        });
 
-      if (submitError) {
-        setSubmitError(null);
-      }
-    };
+        if (submitError) {
+          setSubmitError(null);
+        }
+      };
 
   const handleBlur =
     (field: keyof AutomationFormValues) => () => {
@@ -132,11 +132,12 @@ export function AutomationForm() {
           label="Title"
           required
           error={visibleErrors.title}
+          hint="Give your automation a memorable name"
           hintThresholdText={limitHint(formValues.title, TITLE_LIMIT)}
         >
           <Input
             name="title"
-            placeholder="Give your automation a memorable name"
+            placeholder="e.g. Find cheap flights daily"
             maxLength={TITLE_LIMIT}
             required
             value={formValues.title}
@@ -155,7 +156,7 @@ export function AutomationForm() {
       >
         <Input
           name="summary"
-          placeholder="Who is this for and what problem does it solve?"
+          placeholder="e.g. Searches for cheap flights to any location daily - great to discover new destinations!"
           maxLength={SUMMARY_LIMIT}
           required
           value={formValues.summary}
@@ -166,7 +167,7 @@ export function AutomationForm() {
       </Field>
       <Field
         label="Description"
-        hint="Share the workflow, key steps, and any setup instructions. Markdown is supported."
+        hint="Explain what people need to know about this automation, including any setup instructions. Markdown is supported."
         error={visibleErrors.description}
         hintThresholdText={limitHint(formValues.description, DESCRIPTION_LIMIT)}
       >
@@ -175,7 +176,7 @@ export function AutomationForm() {
           rows={8}
           maxLength={DESCRIPTION_LIMIT}
           placeholder={
-            "Explain the automation in detail so others can reproduce it."
+            "e.g. Set up a MCP server by following the instructions from https://github.com/nilsreichardt/flights-mcp"
           }
           value={formValues.description}
           onChange={handleChange("description")}
@@ -193,7 +194,7 @@ export function AutomationForm() {
           name="prompt"
           rows={5}
           required
-          placeholder="Write a personalised welcome email for {{customer_name}} highlighting the onboarding checklist and assign follow-up tasks to the success team."
+          placeholder="e.g. Monitor round-trip flights departing from SFO or OAK to any destination within the U.S. My total budget is under $60. Dates are flexible from same-day departures up to one week out, and trip duration can be between same-day return and up to 5 days. Every morning at 8 AM, send me a concise summary of any flights that meet these criteria."
           value={formValues.prompt}
           onChange={handleChange("prompt")}
           onBlur={handleBlur("prompt")}
@@ -207,7 +208,7 @@ export function AutomationForm() {
       >
         <Input
           name="tags"
-          placeholder="automation, marketing, onboarding"
+          placeholder="travel, fun, flights"
           value={formValues.tags}
           onChange={handleChange("tags")}
           onBlur={handleBlur("tags")}

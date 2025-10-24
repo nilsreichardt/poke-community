@@ -24,14 +24,13 @@ export function SupabaseProvider({ children, initialUser }: ProviderProps) {
   const [user, setUser] = useState<User | null>(initialUser);
 
   useEffect(() => {
-    setUser(initialUser);
-  }, [initialUser]);
-
-  useEffect(() => {
     let isActive = true;
 
-    const syncUser = async () => {
-      const { data, error } = await supabase.auth.getUser();
+    const syncFromSession = async () => {
+      const {
+        data: { session },
+        error,
+      } = await supabase.auth.getSession();
       if (!isActive) {
         return;
       }
@@ -39,15 +38,18 @@ export function SupabaseProvider({ children, initialUser }: ProviderProps) {
         setUser(null);
         return;
       }
-      setUser(data.user ?? null);
+      setUser(session?.user ?? null);
     };
 
-    void syncUser();
+    void syncFromSession();
 
     const {
       data: { subscription },
-    } = supabase.auth.onAuthStateChange(() => {
-      void syncUser();
+    } = supabase.auth.onAuthStateChange((_event, session) => {
+      if (!isActive) {
+        return;
+      }
+      setUser(session?.user ?? null);
     });
 
     return () => {

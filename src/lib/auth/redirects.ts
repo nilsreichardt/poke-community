@@ -44,7 +44,7 @@ export function parseRedirectFormValue(
 
 export function revalidateAuthPaths(target: string) {
   const base = target.split("?")[0] || FALLBACK_REDIRECT;
-  revalidatePath("/");
+  revalidatePath("/", "layout");
   revalidatePath("/automations");
 
   if (base !== "/" && base !== "/automations") {
