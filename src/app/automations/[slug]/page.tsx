@@ -77,9 +77,7 @@ export async function generateMetadata({
       siteName: siteMetadata.name,
       publishedTime,
       modifiedTime,
-      authors: automation.profiles?.username
-        ? [automation.profiles.username]
-        : undefined,
+      authors: automation.profiles?.name ? [automation.profiles.name] : undefined,
       tags: automation.tags ?? undefined,
       images: [
         {
@@ -113,6 +111,7 @@ export default async function AutomationPage({ params }: AutomationPageProps) {
   }
 
   const canonicalUrl = absoluteUrl(`/automations/${automation.slug}`);
+  const authorName = automation.profiles?.name ?? null;
   const createdAt = automation.created_at
     ? new Date(automation.created_at)
     : null;
@@ -143,7 +142,7 @@ export default async function AutomationPage({ params }: AutomationPageProps) {
               ) : null}
             </div>
             <div className="flex flex-wrap items-center gap-2 text-sm text-muted-foreground">
-              <span>Shared by {automation.profiles?.username ?? "Community member"}</span>
+              <span>Shared by {authorName ?? "Anonymous member"}</span>
               <span className="hidden h-1 w-1 rounded-full bg-muted-foreground/50 sm:inline-block" />
               <span>{automation.vote_total} total votes</span>
             </div>
@@ -275,10 +274,10 @@ function AutomationJsonLd({
       automation.updated_at ?? automation.created_at ?? undefined,
     url: canonicalUrl,
     mainEntityOfPage: canonicalUrl,
-    author: automation.profiles?.username
+    author: automation.profiles?.name
       ? {
           "@type": "Person",
-          name: automation.profiles.username,
+          name: automation.profiles.name,
         }
       : {
           "@type": "Organization",

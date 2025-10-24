@@ -11,7 +11,7 @@ type AutomationCardProps = {
   automation: AutomationRecord & {
     profiles: {
       id: string;
-      username: string | null;
+      name: string | null;
       avatar_url: string | null;
     } | null;
     user_vote?: number;
@@ -22,9 +22,8 @@ type AutomationCardProps = {
 export function AutomationCard({ automation }: AutomationCardProps) {
   const [isHeaderHover, setIsHeaderHover] = useState(false);
   const ownerName =
-    automation.profiles?.username ??
-    automation.profiles?.id?.slice(0, 8) ??
-    "Community member";
+    automation.profiles?.name ??
+    "Anonymous member";
   const createdAt = automation.created_at
     ? new Date(automation.created_at)
     : null;

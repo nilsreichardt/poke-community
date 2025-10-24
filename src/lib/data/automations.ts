@@ -6,12 +6,14 @@ import type {
   VoteRecord,
 } from "@/lib/supabase/records";
 
+type ProfileRowSubset = {
+  id: string;
+  name: string | null;
+  avatar_url: string | null;
+};
+
 type AutomationRowWithRelations = AutomationRecord & {
-  profiles: {
-    id: string;
-    username: string | null;
-    avatar_url: string | null;
-  } | null;
+  profiles: ProfileRowSubset | null;
   votes: {
     value: number;
     user_id: string;
@@ -19,11 +21,7 @@ type AutomationRowWithRelations = AutomationRecord & {
 };
 
 type AutomationWithRelations = AutomationRecord & {
-  profiles: {
-    id: string;
-    username: string | null;
-    avatar_url: string | null;
-  } | null;
+  profiles: ProfileRowSubset | null;
   recent_votes?: number;
   user_vote?: number;
 };
@@ -63,7 +61,7 @@ export async function getAutomations(
   let query = supabase
     .from("automations")
     .select(
-      "*, profiles(id, username, avatar_url), votes(value, automation_id, user_id)"
+      "*, profiles(id, name, avatar_url), votes(value, automation_id, user_id)"
     );
 
   if (options.search) {
@@ -122,7 +120,7 @@ export async function getAutomationsForCurrentUser(): Promise<
   const { data, error } = await supabase
     .from("automations")
     .select(
-      "*, profiles(id, username, avatar_url), votes(value, automation_id, user_id)"
+      "*, profiles(id, name, avatar_url), votes(value, automation_id, user_id)"
     )
     .eq("user_id", user.id)
     .order("created_at", { ascending: false })
@@ -195,7 +193,7 @@ export async function getAutomationBySlug(
   const { data, error } = await supabase
     .from("automations")
     .select(
-      "*, profiles(id, username, avatar_url), votes(value, automation_id, user_id)"
+      "*, profiles(id, name, avatar_url), votes(value, automation_id, user_id)"
     )
     .eq("slug", slug)
     .maybeSingle();
@@ -271,7 +269,7 @@ export async function getTrendingAutomations(limit = 6) {
   const { data: automationRows, error: automationsError } = await supabase
     .from("automations")
     .select(
-      "*, profiles(id, username, avatar_url), votes(value, automation_id, user_id)"
+      "*, profiles(id, name, avatar_url), votes(value, automation_id, user_id)"
     )
     .in("id", ids)
     .returns<AutomationRowWithRelations[]>();

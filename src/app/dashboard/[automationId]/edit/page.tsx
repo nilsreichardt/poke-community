@@ -10,13 +10,13 @@ import { EditAutomationForm } from "@/app/dashboard/edit-automation-form";
 export const dynamic = "force-dynamic";
 
 type EditAutomationPageProps = {
-  params: { automationId: string };
+  params: Promise<{ automationId: string }>;
 };
 
 export default async function EditAutomationPage({
   params,
 }: EditAutomationPageProps) {
-  const automationId = params?.automationId;
+  const { automationId } = await params;
 
   if (!automationId) {
     notFound();

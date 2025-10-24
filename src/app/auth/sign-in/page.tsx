@@ -1,3 +1,4 @@
+import { parseRedirectParam } from "@/lib/auth/redirects";
 import { SignInForm } from "./sign-in-form";
 
 export const dynamic = "force-dynamic";
@@ -11,41 +12,53 @@ type SignInPageProps = {
 export default async function SignInPage({ searchParams }: SignInPageProps) {
   const resolvedSearchParams = (await searchParams) ?? {};
   const redirectParam =
-    resolvedSearchParams.redirectTo ?? resolvedSearchParams.next ?? "/";
-  const redirectTo = Array.isArray(redirectParam)
-    ? redirectParam[0]
-    : redirectParam ?? "/";
-  const sanitizedRedirect = sanitizeRedirect(redirectTo);
+    resolvedSearchParams.redirectTo ?? resolvedSearchParams.next;
+  const sanitizedRedirect = parseRedirectParam(redirectParam);
+  const googleErrorMessage = resolveGoogleError(resolvedSearchParams);
 
   return (
     <div className="mx-auto flex w-full max-w-md flex-col gap-6 rounded-xl border border-border bg-card p-8 shadow-sm">
       <div>
         <h1 className="text-2xl font-semibold">Sign in to poke.community</h1>
         <p className="mt-2 text-sm text-muted-foreground">
-          We will email you a secure sign-in link. No passwords to remember.
+          Continue with Google or your email credentials to manage automations,
+          vote on ideas, and stay in sync with the community.
         </p>
       </div>
-      <SignInForm redirectTo={sanitizedRedirect} />
-      <p className="text-xs text-muted-foreground">
-        Google sign-in is coming soon. For now we only support email links.
-      </p>
+      <SignInForm
+        redirectTo={sanitizedRedirect}
+        googleErrorMessage={googleErrorMessage}
+      />
     </div>
   );
 }
 
-function sanitizeRedirect(value: string) {
-  if (typeof value !== "string") {
-    return "/";
+function resolveGoogleError(params: SignInSearchParams) {
+  const description = firstValue(params.error_description);
+  if (description) {
+    return description;
   }
 
-  try {
-    const decoded = decodeURIComponent(value);
-    if (decoded.startsWith("/") && !decoded.startsWith("//")) {
-      return decoded;
-    }
-  } catch {
-    // ignore decode errors
+  const error = firstValue(params.error);
+
+  if (!error) {
+    return null;
   }
 
-  return "/";
+  switch (error) {
+    case "access_denied":
+      return "Google sign-in was cancelled. Please try again or use a different account.";
+    case "server_error":
+      return "Google sign-in failed due to a temporary error. Please try again.";
+    default:
+      return "Google sign-in failed. Please try again.";
+  }
+}
+
+function firstValue(value: string | string[] | undefined) {
+  if (Array.isArray(value)) {
+    return value[0];
+  }
+
+  return value;
 }

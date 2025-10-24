@@ -1,5 +1,6 @@
 "use server";
 
+import { headers } from "next/headers";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { z } from "zod";
@@ -18,11 +19,33 @@ import {
   parsedToFormValues,
   validateAutomationForm,
 } from "@/lib/validation/automation-form";
-import type { AuthFormState, AutomationFormState } from "./form-states";
+import {
+  parseRedirectFormValue,
+  revalidateAuthPaths,
+} from "@/lib/auth/redirects";
+import type {
+  AuthFormState,
+  AutomationFormState,
+  UpdateNameFormState,
+} from "./form-states";
 
 const passwordSignInSchema = z.object({
   email: z.string().email(),
   password: z.string().min(4),
+});
+
+const updateProfileNameSchema = z.object({
+  name: z
+    .string()
+    .transform((value) => value.trim())
+    .refine(
+      (value) => value.length === 0 || value.length >= 2,
+      "Name must be at least 2 characters or left blank."
+    )
+    .refine(
+      (value) => value.length <= 80,
+      "Name must be 80 characters or fewer."
+    ),
 });
 
 export async function requestPasswordSignIn(
@@ -43,7 +66,7 @@ export async function requestPasswordSignIn(
 
   const { email, password } = parseResult.data;
 
-  const redirectTo = parseRedirectPath(formData.get("redirectTo"));
+  const redirectTo = parseRedirectFormValue(formData.get("redirectTo"));
 
   const supabase = await createSupabaseServerClient("mutate");
   const { data, error } = await supabase.auth.signInWithPassword({
@@ -67,8 +90,48 @@ export async function requestPasswordSignIn(
   redirect(redirectTo);
 }
 
+export async function requestGoogleSignIn(
+  _prevState: AuthFormState,
+  formData: FormData
+): Promise<AuthFormState> {
+  const redirectTo = parseRedirectFormValue(formData.get("redirectTo"));
+  const supabase = await createSupabaseServerClient("mutate");
+  const headersList = await headers();
+
+  const origin =
+    headersList.get("origin") ??
+    process.env.NEXT_PUBLIC_SITE_URL ??
+    (process.env.VERCEL_URL
+      ? `https://${process.env.VERCEL_URL}`
+      : "http://localhost:3000");
+
+  const callbackUrl = new URL("/auth/callback", origin);
+
+  if (redirectTo && redirectTo !== "/") {
+    callbackUrl.searchParams.set("redirectTo", redirectTo);
+  }
+
+  const { data, error } = await supabase.auth.signInWithOAuth({
+    provider: "google",
+    options: {
+      redirectTo: callbackUrl.toString(),
+    },
+  });
+
+  if (error || !data?.url) {
+    return {
+      status: "error",
+      message:
+        error?.message ??
+        "Unable to start Google sign-in. Please try again in a moment.",
+    };
+  }
+
+  redirect(data.url);
+}
+
 export async function signOutAction(formData: FormData) {
-  const redirectTo = parseRedirectPath(formData.get("redirectTo"));
+  const redirectTo = parseRedirectFormValue(formData.get("redirectTo"));
 
   const supabase = await createSupabaseServerClient("mutate");
   const { error } = await supabase.auth.signOut();
@@ -80,6 +143,62 @@ export async function signOutAction(formData: FormData) {
   revalidateAuthPaths(redirectTo);
 
   redirect(redirectTo);
+}
+
+export async function updateProfileNameAction(
+  _prevState: UpdateNameFormState,
+  formData: FormData
+): Promise<UpdateNameFormState> {
+  const user = await getCurrentUser();
+
+  if (!user) {
+    return {
+      status: "error",
+      message: "You need to be signed in to update your name.",
+    };
+  }
+
+  const parseResult = updateProfileNameSchema.safeParse({
+    name: formData.get("name"),
+  });
+
+  if (!parseResult.success) {
+    return {
+      status: "error",
+      message:
+        parseResult.error.issues[0]?.message ??
+        "Enter a valid name and try again.",
+    };
+  }
+
+  const normalized = parseResult.data.name;
+  const nextName = normalized.length === 0 ? null : normalized;
+
+  const supabase = await createSupabaseServerClient("mutate");
+  const { error } = await supabase
+    .from("profiles")
+    .update({ name: nextName })
+    .eq("id", user.id);
+
+  if (error) {
+    console.error("Unable to update profile name", error);
+    return {
+      status: "error",
+      message: "Unable to update your name. Please try again.",
+    };
+  }
+
+  revalidatePath("/");
+  revalidatePath("/automations");
+  revalidatePath("/dashboard");
+  revalidatePath("/settings");
+
+  return {
+    status: "success",
+    message: nextName
+      ? "Your name has been updated."
+      : "Your name has been cleared.",
+  };
 }
 
 export async function deleteAccountAction() {
@@ -591,34 +710,5 @@ async function refreshVoteTotals(automationId: string) {
 
   if (updateError) {
     throw new Error(`Unable to update vote total: ${updateError.message}`);
-  }
-}
-
-function parseRedirectPath(value: FormDataEntryValue | null): string {
-  if (typeof value !== "string") {
-    return "/";
-  }
-
-  let decoded = value;
-  try {
-    decoded = decodeURIComponent(value);
-  } catch {
-    return "/";
-  }
-
-  if (!decoded.startsWith("/") || decoded.startsWith("//")) {
-    return "/";
-  }
-
-  return decoded || "/";
-}
-
-function revalidateAuthPaths(target: string) {
-  const base = target.split("?")[0] || "/";
-  revalidatePath("/");
-  revalidatePath("/automations");
-
-  if (base !== "/" && base !== "/automations") {
-    revalidatePath(base);
   }
 }

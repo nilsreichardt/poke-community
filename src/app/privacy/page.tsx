@@ -61,7 +61,7 @@ export default function PrivacyPolicyPage() {
         <h2 className="text-xl font-semibold">Personal Data We Process</h2>
         <ul className="list-disc space-y-2 pl-5">
           <li>
-            <strong>Account details.</strong> When you register or sign in we process your email address and password credentials through Supabase. We synchronise your Supabase user ID, email address, and optional username, avatar, or bio to the public profile table.
+            <strong>Account details.</strong> When you register or sign in we process your email address and password credentials through Supabase. We synchronise your Supabase user ID, email address, and optional name, avatar, or bio to the public profile table.
           </li>
           <li>
             <strong>Community submissions.</strong> When you submit or edit an automation we store the content you provide (title, summary, description, prompt, tags) together with your user ID and timestamps.

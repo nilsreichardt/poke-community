@@ -1,8 +1,10 @@
 import { redirect } from "next/navigation";
 import { getCurrentUser, getSubscriptionPreferences } from "@/lib/data/automations";
+import { createSupabaseServerClient } from "@/lib/supabase/server";
 import { deleteAccountAction } from "@/app/actions/automation-actions";
 import { SubscriptionSwitch } from "./subscription-switch";
 import { DeleteAccountButton } from "./delete-account-button";
+import { NameForm } from "./name-form";
 
 export const dynamic = "force-dynamic";
 
@@ -13,7 +15,20 @@ export default async function SettingsPage() {
     redirect("/auth/sign-in?next=/settings");
   }
 
+  const supabase = await createSupabaseServerClient();
+
+  const { data: profile, error: profileError } = await supabase
+    .from("profiles")
+    .select("name")
+    .eq("id", user.id)
+    .maybeSingle();
+
+  if (profileError) {
+    throw new Error(`Unable to load your profile: ${profileError.message}`);
+  }
+
   const preferences = (await getSubscriptionPreferences()) ?? new Map();
+  const profileName = profile?.name ?? null;
 
   return (
     <div className="space-y-10">
@@ -50,11 +65,13 @@ export default async function SettingsPage() {
       <section className="space-y-4 rounded-xl border border-border bg-card/60 p-6 shadow-sm">
         <div>
           <h2 className="text-lg font-semibold">Account</h2>
+        </div>
+        <div className="space-y-4">
+          <NameForm initialName={profileName} />
+          <hr className="border-t border-border/20" />
           <p className="text-sm text-muted-foreground">
             Deleting your account removes your automations, votes, and email preferences immediately. This cannot be undone.
           </p>
-        </div>
-        <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
           <form action={deleteAccountAction}>
             <DeleteAccountButton />
           </form>

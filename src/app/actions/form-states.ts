@@ -14,6 +14,21 @@ export const passwordSignInInitialState: AuthFormState = {
   message: null,
 };
 
+export const googleSignInInitialState: AuthFormState = {
+  status: "idle",
+  message: null,
+};
+
+export type UpdateNameFormState = {
+  status: "idle" | "success" | "error";
+  message: string | null;
+};
+
+export const updateNameFormInitialState: UpdateNameFormState = {
+  status: "idle",
+  message: null,
+};
+
 export type AutomationFormState = {
   status: "idle" | "error" | "success";
   message: string | null;

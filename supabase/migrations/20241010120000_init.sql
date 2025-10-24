@@ -4,7 +4,7 @@ create extension if not exists moddatetime schema extensions;
 create table if not exists public.profiles (
   id uuid primary key references auth.users (id) on delete cascade,
   created_at timestamptz default timezone('utc', now()),
-  username text,
+  name text,
   avatar_url text,
   bio text,
   email text,

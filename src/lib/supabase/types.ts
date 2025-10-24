@@ -91,7 +91,7 @@ export type Database = {
           created_at: string | null
           email: string | null
           id: string
-          username: string | null
+          name: string | null
         }
         Insert: {
           avatar_url?: string | null
@@ -99,7 +99,7 @@ export type Database = {
           created_at?: string | null
           email?: string | null
           id: string
-          username?: string | null
+          name?: string | null
         }
         Update: {
           avatar_url?: string | null
@@ -107,7 +107,7 @@ export type Database = {
           created_at?: string | null
           email?: string | null
           id?: string
-          username?: string | null
+          name?: string | null
         }
         Relationships: []
       }
