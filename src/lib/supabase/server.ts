@@ -1,18 +1,17 @@
 import { cookies } from "next/headers";
-import { createServerClient } from "@supabase/ssr";
+import {
+  createServerClient,
+  type CookieMethodsServerDeprecated,
+  type CookieOptions,
+} from "@supabase/ssr";
 import { createClient, type SupabaseClient } from "@supabase/supabase-js";
-import { isMockMode } from "@/lib/config";
 import type { Database } from "./types";
 
-export async function createSupabaseServerClient(): Promise<
-  SupabaseClient<Database>
-> {
-  if (isMockMode) {
-    throw new Error(
-      "Supabase server client is unavailable in mock mode."
-    );
-  }
+type CookieMode = "mutate" | "readonly";
 
+export async function createSupabaseServerClient(
+  mode: CookieMode = "readonly"
+): Promise<SupabaseClient<Database>> {
   const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
   const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
 
@@ -24,28 +23,31 @@ export async function createSupabaseServerClient(): Promise<
 
   const cookieStore = await cookies();
 
+  const cookiesAdapter: CookieMethodsServerDeprecated =
+    mode === "mutate"
+      ? {
+          get(name: string) {
+            return cookieStore.get(name)?.value;
+          },
+          set(name: string, value: string, options: CookieOptions = {}) {
+            cookieStore.set(name, value, options);
+          },
+          remove(name: string, _options: CookieOptions = {}) {
+            cookieStore.delete(name);
+          },
+        }
+      : {
+          get(name: string) {
+            return cookieStore.get(name)?.value;
+          },
+        };
+
   return createServerClient<Database>(supabaseUrl, supabaseAnonKey, {
-    cookies: {
-      get(name) {
-        return cookieStore.get(name)?.value;
-      },
-      set(name, value, options) {
-        cookieStore.set({ name, value, ...options });
-      },
-      remove(name, options) {
-        cookieStore.delete({ name, ...options });
-      },
-    },
+    cookies: cookiesAdapter,
   });
 }
 
 export function createSupabaseServiceRoleClient(): SupabaseClient<Database> {
-  if (isMockMode) {
-    throw new Error(
-      "Supabase service role client is unavailable in mock mode."
-    );
-  }
-
   const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
   const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
 

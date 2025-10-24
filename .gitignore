@@ -16,7 +16,7 @@ playwright-report/
 test-results/
 
 # local env files
-.env.local
+.env
 
 # next.js
 /.next/
@@ -45,3 +45,4 @@ next-env.d.ts
 # supabase
 supabase/.temp/
 supabase/.branches/
+.snaplet/

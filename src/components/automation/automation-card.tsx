@@ -4,7 +4,7 @@ import Link from "next/link";
 import { useState } from "react";
 import { formatDistanceToNow } from "date-fns";
 import { Card, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
-import type { AutomationRecord } from "@/lib/supabase/types";
+import type { AutomationRecord } from "@/lib/supabase/records";
 import { VoteControls } from "./vote-controls";
 
 type AutomationCardProps = {
@@ -25,9 +25,12 @@ export function AutomationCard({ automation }: AutomationCardProps) {
     automation.profiles?.username ??
     automation.profiles?.id?.slice(0, 8) ??
     "Community member";
-  const createdDistance = formatDistanceToNow(new Date(automation.created_at), {
-    addSuffix: true,
-  });
+  const createdAt = automation.created_at
+    ? new Date(automation.created_at)
+    : null;
+  const createdDistance = createdAt
+    ? formatDistanceToNow(createdAt, { addSuffix: true })
+    : "Recently";
 
   return (
     <Card

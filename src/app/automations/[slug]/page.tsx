@@ -60,6 +60,9 @@ export async function generateMetadata({
     `/automations/${automation.slug}/opengraph-image`
   );
 
+  const publishedTime = automation.created_at ?? undefined;
+  const modifiedTime = automation.updated_at ?? automation.created_at ?? undefined;
+
   return {
     title: `${automation.title} — ${siteMetadata.shortName}`,
     description: summary,
@@ -72,8 +75,8 @@ export async function generateMetadata({
       description: summary,
       url: canonical,
       siteName: siteMetadata.name,
-      publishedTime: automation.created_at,
-      modifiedTime: automation.updated_at ?? automation.created_at,
+      publishedTime,
+      modifiedTime,
       authors: automation.profiles?.username
         ? [automation.profiles.username]
         : undefined,
@@ -110,6 +113,10 @@ export default async function AutomationPage({ params }: AutomationPageProps) {
   }
 
   const canonicalUrl = absoluteUrl(`/automations/${automation.slug}`);
+  const createdAt = automation.created_at
+    ? new Date(automation.created_at)
+    : null;
+  const createdLabel = createdAt ? format(createdAt, "PP") : "Recently";
 
   return (
     <article className="space-y-10">
@@ -121,7 +128,7 @@ export default async function AutomationPage({ params }: AutomationPageProps) {
         <div className="space-y-4">
           <div className="flex flex-wrap items-center gap-3">
             <span className="text-xs uppercase tracking-wide text-muted-foreground">
-              Shared {format(new Date(automation.created_at), "PP")}
+              Shared {createdLabel}
             </span>
           </div>
           <div className="space-y-2">
@@ -141,7 +148,7 @@ export default async function AutomationPage({ params }: AutomationPageProps) {
           </div>
           {automation.tags?.length ? (
             <div className="flex flex-wrap gap-2">
-              {automation.tags.map((tag) => (
+              {automation.tags.map((tag: string) => (
                 <Badge key={tag} variant="outline" className="text-xs uppercase">
                   #{tag}
                 </Badge>
@@ -255,8 +262,9 @@ function AutomationJsonLd({
     "@type": "Article",
     headline: automation.title,
     abstract: automation.summary ?? undefined,
-    datePublished: automation.created_at,
-    dateModified: automation.updated_at ?? automation.created_at,
+    datePublished: automation.created_at ?? undefined,
+    dateModified:
+      automation.updated_at ?? automation.created_at ?? undefined,
     url: canonicalUrl,
     mainEntityOfPage: canonicalUrl,
     author: automation.profiles?.username

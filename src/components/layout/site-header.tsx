@@ -95,10 +95,10 @@ function UserMenu({ redirectTo }: UserMenuProps) {
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end" className="w-56">
         <DropdownMenuItem asChild>
-          <Link href="/dashboard">Dashboard</Link>
+          <Link href="/dashboard">My automations</Link>
         </DropdownMenuItem>
         <DropdownMenuItem asChild>
-          <Link href="/submit">Share automation</Link>
+          <Link href="/settings">Settings</Link>
         </DropdownMenuItem>
         <DropdownMenuItem>
           <form className="w-full" action={signOutAction}>

@@ -1,6 +1,5 @@
 import { createSupabaseServiceRoleClient } from "@/lib/supabase/server";
 import { resendClient } from "./resend";
-import { isMockMode } from "@/lib/config";
 
 const SITE_URL =
   process.env.NEXT_PUBLIC_SITE_URL ?? "https://poke.community";
@@ -24,7 +23,7 @@ type SubscriptionRowWithProfile = {
 export async function sendAutomationAnnouncement(
   input: AutomationAnnouncementInput
 ) {
-  if (!resendClient || isMockMode) {
+  if (!resendClient) {
     return;
   }
 
@@ -96,7 +95,7 @@ function buildAnnouncementText(title: string, automationUrl: string) {
 export async function sendTrendingDigest({
   automations,
 }: TrendingDigestInput) {
-  if (!resendClient || automations.length === 0 || isMockMode) {
+  if (!resendClient || automations.length === 0) {
     return;
   }
 

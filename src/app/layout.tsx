@@ -1,11 +1,11 @@
 import type { Metadata } from "next";
+import type { User } from "@supabase/supabase-js";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 import { SupabaseProvider } from "@/components/providers/supabase-provider";
 import { SiteHeader } from "@/components/layout/site-header";
 import { SiteFooter } from "@/components/layout/site-footer";
-import { isMockMode } from "@/lib/config";
 import { metadataBaseUrl, siteMetadata, absoluteUrl } from "@/lib/seo";
 
 const geistSans = Geist({
@@ -59,14 +59,16 @@ export default async function RootLayout({
 }: Readonly<{
   children: React.ReactNode;
 }>) {
-  let session = null;
+  let user: User | null = null;
 
-  if (!isMockMode) {
-    const supabase = await createSupabaseServerClient();
-    const {
-      data,
-    } = await supabase.auth.getSession();
-    session = data.session;
+  try {
+    const supabase = await createSupabaseServerClient("readonly");
+    const { data, error } = await supabase.auth.getUser();
+    if (!error) {
+      user = data.user;
+    }
+  } catch (error) {
+    console.error("Unable to fetch current user", error);
   }
 
   return (
@@ -74,7 +76,7 @@ export default async function RootLayout({
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
       >
-        <SupabaseProvider initialSession={session}>
+        <SupabaseProvider initialUser={user}>
           <div className="flex min-h-screen flex-col bg-background text-foreground">
             <SiteHeader />
             <main className="flex-1">

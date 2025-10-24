@@ -4,12 +4,11 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { AutomationCard } from "@/components/automation/automation-card";
 import { getAutomations } from "@/lib/data/automations";
-import type { AutomationCategory } from "@/lib/supabase/types";
 import { absoluteUrl, siteMetadata } from "@/lib/seo";
 
 const pageTitle = "Community automations";
 const pageDescription =
-  "Browse every automation shared by the poke.community builders. Filter by category, search by keyword, and find the perfect workflow to remix.";
+  "Browse every automation shared by the poke.community builders. Search by keyword, and find the perfect workflow to remix.";
 
 export const metadata: Metadata = {
   title: `${pageTitle}`,
@@ -43,15 +42,10 @@ export default async function AutomationsPage({
   const rawQuery = normalizeParam(params.q);
   const q = rawQuery?.trim() ?? "";
   const sortParam = normalizeParam(params.sort) === "top" ? "top" : "new";
-  const categoryParam = normalizeParam(params.category);
-  const category = isAutomationCategory(categoryParam)
-    ? categoryParam
-    : undefined;
 
   const automations = await getAutomations({
     search: q || undefined,
     orderBy: sortParam === "top" ? "top" : "new",
-    category,
   });
 
   return (
@@ -139,10 +133,4 @@ function normalizeParam(value: string | string[] | undefined) {
     return value[0] ?? undefined;
   }
   return value ?? undefined;
-}
-
-function isAutomationCategory(
-  value: string | undefined
-): value is AutomationCategory {
-  return value === "automation" || value === "template" || value === "integration";
 }

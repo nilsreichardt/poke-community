@@ -2,18 +2,9 @@ import { cache } from "react";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 import type {
   AutomationRecord,
-  AutomationCategory,
   SubscriptionType,
-} from "@/lib/supabase/types";
-import { isMockMode } from "@/lib/config";
-import {
-  queryAutomationsMock,
-  getAutomationBySlugMock,
-  getTrendingAutomationsMock,
-  getSubscriptionPreferencesMock,
-  getMockUser,
-  listAutomationSlugsMock,
-} from "@/lib/data/mock-data";
+  VoteRecord,
+} from "@/lib/supabase/records";
 
 type AutomationRowWithRelations = AutomationRecord & {
   profiles: {
@@ -40,15 +31,10 @@ type AutomationWithRelations = AutomationRecord & {
 type ListAutomationsOptions = {
   search?: string;
   limit?: number;
-  category?: AutomationCategory;
   orderBy?: "new" | "top";
 };
 
 export const getCurrentUser = cache(async () => {
-  if (isMockMode) {
-    return getMockUser();
-  }
-
   const supabase = await createSupabaseServerClient();
   const {
     data: { user },
@@ -67,13 +53,6 @@ export async function getAutomations(
 ): Promise<AutomationWithRelations[]> {
   const user = await getCurrentUser();
 
-  if (isMockMode) {
-    return queryAutomationsMock({
-      ...options,
-      userId: user?.id ?? null,
-    });
-  }
-
   const supabase = await createSupabaseServerClient();
 
   let query = supabase
@@ -87,10 +66,6 @@ export async function getAutomations(
     query = query.or(
       `title.ilike.${likeValue},description.ilike.${likeValue},summary.ilike.${likeValue}`
     );
-  }
-
-  if (options.category) {
-    query = query.eq("category", options.category);
   }
 
   if (options.limit) {
@@ -113,9 +88,55 @@ export async function getAutomations(
   const rows = data ?? [];
 
   return rows.map<AutomationWithRelations>((item) => {
-    const votes = Array.isArray(item.votes) ? item.votes : [];
+    const votes = Array.isArray(item.votes)
+      ? (item.votes as VoteRecord[])
+      : [];
     const userVote =
       votes.find((vote) => vote.user_id === user?.id)?.value ?? 0;
+    const { votes: _unusedVotes, ...rest } = item;
+    void _unusedVotes;
+
+    return {
+      ...rest,
+      user_vote: userVote,
+    };
+  });
+}
+
+export async function getAutomationsForCurrentUser(): Promise<
+  AutomationWithRelations[]
+> {
+  const user = await getCurrentUser();
+
+  if (!user) {
+    return [];
+  }
+
+  const supabase = await createSupabaseServerClient();
+
+  const { data, error } = await supabase
+    .from("automations")
+    .select(
+      "*, profiles(id, username, avatar_url), votes(value, automation_id, user_id)"
+    )
+    .eq("user_id", user.id)
+    .order("created_at", { ascending: false })
+    .returns<AutomationRowWithRelations[]>();
+
+  if (error) {
+    throw new Error(
+      `Unable to load your automations: ${error.message}`
+    );
+  }
+
+  const rows = data ?? [];
+
+  return rows.map<AutomationWithRelations>((item) => {
+    const votes = Array.isArray(item.votes)
+      ? (item.votes as VoteRecord[])
+      : [];
+    const userVote =
+      votes.find((vote) => vote.user_id === user.id)?.value ?? 0;
     const { votes: _unusedVotes, ...rest } = item;
     void _unusedVotes;
 
@@ -130,10 +151,6 @@ export async function getAutomationBySlug(
   slug: string
 ): Promise<AutomationWithRelations | null> {
   const user = await getCurrentUser();
-
-  if (isMockMode) {
-    return getAutomationBySlugMock(slug);
-  }
 
   const supabase = await createSupabaseServerClient();
 
@@ -155,7 +172,9 @@ export async function getAutomationBySlug(
     return null;
   }
 
-  const votes = Array.isArray(automation.votes) ? automation.votes : [];
+  const votes = Array.isArray(automation.votes)
+    ? (automation.votes as VoteRecord[])
+    : [];
   const userVote =
     votes.find((vote) => vote.user_id === user?.id)?.value ?? 0;
   const { votes: _unusedVotes, ...rest } = automation;
@@ -169,10 +188,6 @@ export async function getAutomationBySlug(
 
 export async function getTrendingAutomations(limit = 6) {
   const user = await getCurrentUser();
-
-  if (isMockMode) {
-    return getTrendingAutomationsMock(limit);
-  }
 
   const supabase = await createSupabaseServerClient();
 
@@ -193,9 +208,26 @@ export async function getTrendingAutomations(limit = 6) {
     return [];
   }
 
-  const ids = rankings.map((item) => item.id);
+  const rankedAutomations = rankings
+    .map((item) =>
+      typeof item.id === "string"
+        ? {
+            id: item.id,
+            recent_votes: item.recent_votes ?? 0,
+          }
+        : null
+    )
+    .filter(
+      (item): item is { id: string; recent_votes: number } => item !== null
+    );
+
+  if (!rankedAutomations.length) {
+    return [];
+  }
+
+  const ids = rankedAutomations.map((item) => item.id);
   const rankingsMap = new Map(
-    rankings.map((item) => [item.id, item.recent_votes] as const)
+    rankedAutomations.map((item) => [item.id, item.recent_votes] as const)
   );
 
   const { data: automationRows, error: automationsError } = await supabase
@@ -217,11 +249,13 @@ export async function getTrendingAutomations(limit = 6) {
     rows.map((row) => [row.id, row] as const)
   );
 
-  return ids
-    .map((id) => automationMap.get(id))
+  return rankedAutomations
+    .map(({ id }) => automationMap.get(id))
     .filter((item): item is AutomationRowWithRelations => Boolean(item))
     .map<AutomationWithRelations>((item) => {
-      const votes = Array.isArray(item.votes) ? item.votes : [];
+      const votes = Array.isArray(item.votes)
+        ? (item.votes as VoteRecord[])
+        : [];
       const userVote =
         votes.find((vote) => vote.user_id === user?.id)?.value ?? 0;
       const { votes: _unusedVotes, ...rest } = item;
@@ -244,10 +278,6 @@ type AutomationSlugSummary = {
 export async function listAutomationSlugs(): Promise<
   AutomationSlugSummary[]
 > {
-  if (isMockMode) {
-    return listAutomationSlugsMock();
-  }
-
   const supabase = await createSupabaseServerClient();
 
   const { data, error } = await supabase
@@ -270,14 +300,7 @@ export async function getSubscriptionPreferences() {
   const user = await getCurrentUser();
 
   if (!user) {
-    if (isMockMode) {
-      return null;
-    }
     return null;
-  }
-
-  if (isMockMode) {
-    return getSubscriptionPreferencesMock(user.id);
   }
 
   const supabase = await createSupabaseServerClient();

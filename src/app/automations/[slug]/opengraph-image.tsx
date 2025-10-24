@@ -142,7 +142,7 @@ export default async function AutomationOgImage({
                 fontSize: 30,
               }}
             >
-              {automation.tags?.slice(0, 3).map((tag) => (
+              {automation.tags?.slice(0, 3).map((tag: string) => (
                 <span
                   key={tag}
                   style={{

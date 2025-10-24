@@ -88,7 +88,7 @@ export default function PrivacyPolicyPage() {
             <strong>Provide the service.</strong> We process account, submission, and interaction data to operate the community platform, authenticate users, display automation content, and maintain leaderboards (Art. 6(1)(b) GDPR – performance of a contract).
           </li>
           <li>
-            <strong>Send community updates.</strong> We deliver opt-in announcement and digest emails via Resend based on your preferences (Art. 6(1)(a) GDPR – consent, which you can withdraw at any time in the dashboard or by contacting us).
+            <strong>Send community updates.</strong> We deliver opt-in announcement and digest emails via Resend based on your preferences (Art. 6(1)(a) GDPR – consent, which you can withdraw at any time in Settings or by contacting us).
           </li>
           <li>
             <strong>Security and abuse prevention.</strong> We use technical logs to troubleshoot issues, prevent misuse, and secure our infrastructure (Art. 6(1)(f) GDPR – legitimate interests).
@@ -138,7 +138,7 @@ export default function PrivacyPolicyPage() {
       <section className="space-y-3 text-sm leading-relaxed">
         <h2 className="text-xl font-semibold">Your Rights</h2>
         <p>
-          Under the GDPR you have the right to access, rectify, erase, or port your data, to restrict or object to certain processing, and to withdraw consent at any time. You can update your subscriptions in the dashboard and request further changes or deletion by contacting us at{" "}
+          Under the GDPR you have the right to access, rectify, erase, or port your data, to restrict or object to certain processing, and to withdraw consent at any time. You can update your subscriptions in Settings and request further changes or deletion by contacting us at{" "}
           <a
             href="mailto:hi@poke.community"
             className="underline hover:no-underline"

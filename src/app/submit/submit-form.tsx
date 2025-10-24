@@ -1,6 +1,12 @@
 "use client";
 
-import { useActionState, useEffect } from "react";
+import {
+  useActionState,
+  useEffect,
+  useState,
+  type ChangeEvent,
+  type FormEvent,
+} from "react";
 import { useFormStatus } from "react-dom";
 import { useRouter } from "next/navigation";
 import { createAutomationAction } from "@/app/actions/automation-actions";
@@ -8,6 +14,21 @@ import { automationFormInitialState } from "@/app/actions/form-states";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
+import {
+  type AutomationFormValues,
+  validateAutomationForm,
+} from "@/lib/validation/automation-form";
+
+const TITLE_LIMIT = 120;
+const SUMMARY_LIMIT = 180;
+const DESCRIPTION_LIMIT = 8000;
+const INITIAL_TOUCHED_STATE: Record<keyof AutomationFormValues, boolean> = {
+  title: false,
+  summary: false,
+  description: false,
+  prompt: false,
+  tags: false,
+};
 
 export function AutomationForm() {
   const router = useRouter();
@@ -15,6 +36,13 @@ export function AutomationForm() {
     createAutomationAction,
     automationFormInitialState
   );
+  const [formValues, setFormValues] = useState(automationFormInitialState.values);
+  const [fieldErrors, setFieldErrors] = useState(
+    automationFormInitialState.fieldErrors
+  );
+  const [submitError, setSubmitError] = useState<string | null>(null);
+  const [touchedFields, setTouchedFields] = useState(INITIAL_TOUCHED_STATE);
+  const [hasAttemptedSubmit, setHasAttemptedSubmit] = useState(false);
 
   useEffect(() => {
     if (state.status === "success" && state.slug) {
@@ -22,67 +50,181 @@ export function AutomationForm() {
     }
   }, [state, router]);
 
+  useEffect(() => {
+    if (state.status === "error") {
+      setFormValues(state.values);
+      setFieldErrors(state.fieldErrors);
+      setSubmitError(state.message);
+      setHasAttemptedSubmit(true);
+    }
+  }, [state]);
+
+  const getVisibleError = (field: keyof AutomationFormValues) => {
+    if (!(hasAttemptedSubmit || touchedFields[field])) {
+      return undefined;
+    }
+
+    return fieldErrors[field];
+  };
+
+  const visibleErrors = {
+    title: getVisibleError("title"),
+    summary: getVisibleError("summary"),
+    description: getVisibleError("description"),
+    prompt: getVisibleError("prompt"),
+    tags: getVisibleError("tags"),
+  };
+
+  const handleChange =
+    (field: keyof AutomationFormValues) =>
+    (event: ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+      const value = event.target.value;
+      setTouchedFields((prev) => ({
+        ...prev,
+        [field]: true,
+      }));
+      setFormValues((prev) => {
+        const next = {
+          ...prev,
+          [field]: value,
+        };
+        const validation = validateAutomationForm(next);
+        setFieldErrors(validation.fieldErrors);
+        return next;
+      });
+
+      if (submitError) {
+        setSubmitError(null);
+      }
+    };
+
+  const handleBlur =
+    (field: keyof AutomationFormValues) => () => {
+      setTouchedFields((prev) => ({
+        ...prev,
+        [field]: true,
+      }));
+    };
+
+  const handleSubmit = (event: FormEvent<HTMLFormElement>) => {
+    const validation = validateAutomationForm(formValues);
+    setFieldErrors(validation.fieldErrors);
+    setHasAttemptedSubmit(true);
+
+    if (!validation.success) {
+      event.preventDefault();
+      setSubmitError("Please review the form fields and try again.");
+      return;
+    }
+
+    setSubmitError(null);
+  };
+
   return (
-    <form className="space-y-6" action={formAction}>
+    <form
+      className="space-y-6"
+      action={formAction}
+      noValidate
+      onSubmit={handleSubmit}
+    >
       <div className="grid gap-4 sm:grid-cols-2">
-        <Field label="Title" required>
+        <Field
+          label="Title"
+          required
+          error={visibleErrors.title}
+          hintThresholdText={limitHint(formValues.title, TITLE_LIMIT)}
+        >
           <Input
             name="title"
             placeholder="Give your automation a memorable name"
-            maxLength={120}
+            maxLength={TITLE_LIMIT}
             required
+            value={formValues.title}
+            onChange={handleChange("title")}
+            onBlur={handleBlur("title")}
+            aria-invalid={Boolean(visibleErrors.title)}
           />
         </Field>
       </div>
-      <Field label="Summary" required hint="One-liner that appears in lists">
+      <Field
+        label="Summary"
+        required
+        hint="One-liner that appears in lists"
+        error={visibleErrors.summary}
+        hintThresholdText={limitHint(formValues.summary, SUMMARY_LIMIT)}
+      >
         <Input
           name="summary"
           placeholder="Who is this for and what problem does it solve?"
-          maxLength={180}
+          maxLength={SUMMARY_LIMIT}
           required
+          value={formValues.summary}
+          onChange={handleChange("summary")}
+          onBlur={handleBlur("summary")}
+          aria-invalid={Boolean(visibleErrors.summary)}
         />
       </Field>
       <Field
         label="Description"
         hint="Share the workflow, key steps, and any setup instructions. Markdown is supported."
+        error={visibleErrors.description}
+        hintThresholdText={limitHint(formValues.description, DESCRIPTION_LIMIT)}
       >
         <Textarea
           name="description"
           rows={8}
+          maxLength={DESCRIPTION_LIMIT}
           placeholder={
             "Explain the automation in detail so others can reproduce it."
           }
+          value={formValues.description}
+          onChange={handleChange("description")}
+          onBlur={handleBlur("description")}
+          aria-invalid={Boolean(visibleErrors.description)}
         />
       </Field>
       <Field
         label="Prompt"
         required
         hint="Exact text to paste into Poke to recreate this automation."
+        error={visibleErrors.prompt}
       >
         <Textarea
           name="prompt"
           rows={5}
           required
           placeholder="Write a personalised welcome email for {{customer_name}} highlighting the onboarding checklist and assign follow-up tasks to the success team."
+          value={formValues.prompt}
+          onChange={handleChange("prompt")}
+          onBlur={handleBlur("prompt")}
+          aria-invalid={Boolean(visibleErrors.prompt)}
         />
       </Field>
-      <Field label="Tags" hint="Comma separated tags such as marketing, onboarding">
+      <Field
+        label="Tags"
+        hint="Comma separated tags such as marketing, onboarding"
+        error={visibleErrors.tags}
+      >
         <Input
           name="tags"
           placeholder="automation, marketing, onboarding"
+          value={formValues.tags}
+          onChange={handleChange("tags")}
+          onBlur={handleBlur("tags")}
+          aria-invalid={Boolean(visibleErrors.tags)}
         />
       </Field>
 
       <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <p className="text-xs text-muted-foreground">
           By publishing you agree to share this automation publicly. You can
-          edit or delete it later from your dashboard.
+          edit or delete it later from your settings.
         </p>
         <SubmitButton />
       </div>
 
-      {state.status === "error" && state.message ? (
-        <p className="text-sm text-destructive">{state.message}</p>
+      {submitError ? (
+        <p className="text-sm text-destructive">{submitError}</p>
       ) : null}
     </form>
   );
@@ -92,13 +234,18 @@ function Field({
   label,
   hint,
   required,
+  error,
+  hintThresholdText,
   children,
 }: {
   label: string;
   hint?: string;
   required?: boolean;
+  error?: string;
+  hintThresholdText?: string | null;
   children: React.ReactNode;
 }) {
+  const hasHintRow = Boolean(hint || hintThresholdText);
   return (
     <label className="flex flex-col gap-2 text-sm">
       <span className="font-medium">
@@ -106,7 +253,21 @@ function Field({
         {required ? <span className="text-destructive"> *</span> : null}
       </span>
       {children}
-      {hint ? <span className="text-xs text-muted-foreground">{hint}</span> : null}
+      {hasHintRow ? (
+        <div className="flex flex-wrap items-center justify-between gap-x-2 gap-y-1">
+          {hint ? (
+            <span className="text-xs text-muted-foreground">{hint}</span>
+          ) : (
+            <span />
+          )}
+          {hintThresholdText ? (
+            <span className="text-xs text-muted-foreground">
+              {hintThresholdText}
+            </span>
+          ) : null}
+        </div>
+      ) : null}
+      {error ? <span className="text-xs text-destructive">{error}</span> : null}
     </label>
   );
 }
@@ -118,4 +279,24 @@ function SubmitButton() {
       {pending ? "Publishing..." : "Publish automation"}
     </Button>
   );
+}
+
+function limitHint(value: string, limit: number) {
+  if (!limit) {
+    return null;
+  }
+
+  const remaining = limit - value.length;
+
+  if (remaining < 0) {
+    return `Over the limit by ${Math.abs(remaining)} characters (${limit} max)`;
+  }
+
+  const threshold = Math.min(50, Math.max(10, Math.floor(limit * 0.1)));
+
+  if (remaining <= threshold) {
+    return `${remaining} characters remaining (${limit} max)`;
+  }
+
+  return null;
 }

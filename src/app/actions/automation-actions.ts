@@ -7,26 +7,18 @@ import {
   createSupabaseServerClient,
   createSupabaseServiceRoleClient,
 } from "@/lib/supabase/server";
-import type { SubscriptionType } from "@/lib/supabase/types";
+import type { SubscriptionType } from "@/lib/supabase/records";
+import type { TablesInsert } from "@/lib/supabase/types";
 import { getCurrentUser } from "@/lib/data/automations";
 import { sendAutomationAnnouncement } from "@/lib/email/subscriptions";
 import { upsertProfileFromSession } from "@/lib/profiles";
-import { isMockMode } from "@/lib/config";
-import {
-  createAutomationMock,
-  toggleVoteMock,
-  setMockSubscriptionPreference,
-} from "@/lib/data/mock-data";
 import { slugify } from "@/lib/slug";
+import {
+  formDataToAutomationFormValues,
+  parsedToFormValues,
+  validateAutomationForm,
+} from "@/lib/validation/automation-form";
 import type { AuthFormState, AutomationFormState } from "./form-states";
-
-const automationSchema = z.object({
-  title: z.string().min(4).max(120),
-  summary: z.string().min(1).max(180),
-  description: z.string().min(24).nullable(),
-  prompt: z.string().min(10),
-  tags: z.string().optional(),
-});
 
 const passwordSignInSchema = z.object({
   email: z.string().email(),
@@ -53,12 +45,7 @@ export async function requestPasswordSignIn(
 
   const redirectTo = parseRedirectPath(formData.get("redirectTo"));
 
-  if (isMockMode) {
-    revalidateAuthPaths(redirectTo);
-    redirect(redirectTo);
-  }
-
-  const supabase = await createSupabaseServerClient();
+  const supabase = await createSupabaseServerClient("mutate");
   const { data, error } = await supabase.auth.signInWithPassword({
     email,
     password,
@@ -83,12 +70,7 @@ export async function requestPasswordSignIn(
 export async function signOutAction(formData: FormData) {
   const redirectTo = parseRedirectPath(formData.get("redirectTo"));
 
-  if (isMockMode) {
-    revalidateAuthPaths(redirectTo);
-    redirect(redirectTo);
-  }
-
-  const supabase = await createSupabaseServerClient();
+  const supabase = await createSupabaseServerClient("mutate");
   const { error } = await supabase.auth.signOut();
 
   if (error) {
@@ -100,30 +82,112 @@ export async function signOutAction(formData: FormData) {
   redirect(redirectTo);
 }
 
+export async function deleteAccountAction() {
+  const user = await getCurrentUser();
+
+  if (!user) {
+    redirect("/auth/sign-in?next=/settings");
+  }
+
+  const serviceClient = createSupabaseServiceRoleClient();
+  const supabase = await createSupabaseServerClient("mutate");
+
+  const { data: automationRows, error: automationQueryError } = await serviceClient
+    .from("automations")
+    .select("id")
+    .eq("user_id", user.id);
+
+  if (automationQueryError) {
+    throw new Error(`Unable to fetch automations for deletion: ${automationQueryError.message}`);
+  }
+
+  const automationIds = (automationRows ?? []).map((automation) => automation.id);
+
+  if (automationIds.length > 0) {
+    const { error: deleteAutomationVotesError } = await serviceClient
+      .from("votes")
+      .delete()
+      .in("automation_id", automationIds);
+
+    if (deleteAutomationVotesError) {
+      throw new Error(`Unable to remove votes for your automations: ${deleteAutomationVotesError.message}`);
+    }
+  }
+
+  const { error: deleteUserVotesError } = await serviceClient
+    .from("votes")
+    .delete()
+    .eq("user_id", user.id);
+
+  if (deleteUserVotesError) {
+    throw new Error(`Unable to remove your votes: ${deleteUserVotesError.message}`);
+  }
+
+  const { error: deleteSubscriptionsError } = await serviceClient
+    .from("subscriptions")
+    .delete()
+    .eq("user_id", user.id);
+
+  if (deleteSubscriptionsError) {
+    throw new Error(`Unable to remove your subscriptions: ${deleteSubscriptionsError.message}`);
+  }
+
+  if (automationIds.length > 0) {
+    const { error: deleteAutomationsError } = await serviceClient
+      .from("automations")
+      .delete()
+      .in("id", automationIds);
+
+    if (deleteAutomationsError) {
+      throw new Error(`Unable to delete your automations: ${deleteAutomationsError.message}`);
+    }
+  }
+
+  const { error: deleteProfileError } = await serviceClient
+    .from("profiles")
+    .delete()
+    .eq("id", user.id);
+
+  if (deleteProfileError) {
+    throw new Error(`Unable to delete your profile: ${deleteProfileError.message}`);
+  }
+
+  const { error: deleteAuthUserError } = await serviceClient.auth.admin.deleteUser(user.id);
+
+  if (deleteAuthUserError) {
+    throw new Error(`Unable to delete your account: ${deleteAuthUserError.message}`);
+  }
+
+  const { error: signOutError } = await supabase.auth.signOut();
+
+  if (signOutError) {
+    throw new Error(`Unable to reset your session: ${signOutError.message}`);
+  }
+
+  revalidateAuthPaths("/");
+  revalidatePath("/settings");
+
+  redirect("/");
+}
+
 export async function createAutomationAction(
   _prevState: AutomationFormState,
   formData: FormData
 ): Promise<AutomationFormState> {
-  const summary = formData.get("summary");
-  const description = formData.get("description");
+  const submittedValues = formDataToAutomationFormValues(formData);
+  const validation = validateAutomationForm(submittedValues);
+  const nextValues = parsedToFormValues(validation.data);
 
-  const parsed = automationSchema.safeParse({
-    title: formData.get("title"),
-    summary: typeof summary === "string" ? summary.trim() : "",
-    description:
-      typeof description === "string" && description.trim().length
-        ? description.trim()
-        : null,
-    prompt: formData.get("prompt"),
-    tags: formData.get("tags"),
-  });
-
-  if (!parsed.success) {
+  if (!validation.success) {
     return {
       status: "error",
       message: "Please review the form fields and try again.",
+      values: nextValues,
+      fieldErrors: validation.fieldErrors,
     };
   }
+
+  const normalized = validation.data;
 
   const user = await getCurrentUser();
 
@@ -131,62 +195,46 @@ export async function createAutomationAction(
     return {
       status: "error",
       message: "You need to sign in before sharing an automation.",
+      values: nextValues,
+      fieldErrors: {},
     };
   }
 
   await upsertProfileFromSession(user);
 
-  const normalizedTags = parsed.data.tags
-    ? parsed.data.tags
+  const normalizedTags: string[] | null = normalized.tags
+    ? normalized.tags
         .split(",")
         .map((tag) => tag.trim())
         .filter(Boolean)
     : null;
 
-  if (isMockMode) {
-    const automation = createAutomationMock({
-      title: parsed.data.title,
-      summary: parsed.data.summary,
-      description: parsed.data.description,
-      prompt: parsed.data.prompt,
-      tags: normalizedTags,
-      user_id: user.id,
-    });
+  const supabase = await createSupabaseServerClient("mutate");
+  const slug = await generateUniqueSlug(normalized.title);
 
-    revalidatePath("/");
-    revalidatePath("/automations");
-
-    return {
-      status: "success",
-      message: "Automation published!",
-      slug: automation.slug,
-    };
-  }
-
-  const supabase = await createSupabaseServerClient();
-  const slug = await generateUniqueSlug(parsed.data.title);
-
-  const { error } = await supabase.from("automations").insert({
-    title: parsed.data.title,
-    summary: parsed.data.summary,
-    description: parsed.data.description,
-    prompt: parsed.data.prompt,
-    setup_details: null,
-    tags: normalizedTags,
-    category: "automation",
+  const automationValues: TablesInsert<"automations"> = {
+    title: normalized.title,
+    summary: normalized.summary ?? null,
+    description: normalized.description ?? "",
+    prompt: normalized.prompt,
+    tags: normalizedTags ?? null,
     slug,
     user_id: user.id,
-  });
+  };
+
+  const { error } = await supabase.from("automations").insert(automationValues);
 
   if (error) {
     return {
       status: "error",
       message: `Unable to create automation: ${error.message}`,
+      values: nextValues,
+      fieldErrors: {},
     };
   }
 
   await sendAutomationAnnouncement({
-    automationTitle: parsed.data.title,
+    automationTitle: normalized.title,
     automationSlug: slug,
   });
 
@@ -196,6 +244,8 @@ export async function createAutomationAction(
   return {
     status: "success",
     message: "Automation published!",
+    values: nextValues,
+    fieldErrors: {},
     slug,
   };
 }
@@ -210,14 +260,7 @@ export async function toggleVoteAction(
     throw new Error("You need to be signed in to vote.");
   }
 
-  if (isMockMode) {
-    toggleVoteMock(automationId, user.id, value);
-    revalidatePath("/");
-    revalidatePath("/automations");
-    return;
-  }
-
-  const supabase = await createSupabaseServerClient();
+  const supabase = await createSupabaseServerClient("mutate");
 
   const existingVoteRes = await supabase
     .from("votes")
@@ -275,6 +318,52 @@ export async function toggleVoteAction(
   revalidatePath("/automations");
 }
 
+export async function deleteAutomationAction(formData: FormData) {
+  const automationId = formData.get("automationId");
+
+  if (typeof automationId !== "string" || !automationId) {
+    throw new Error("Missing automation identifier.");
+  }
+
+  const user = await getCurrentUser();
+
+  if (!user) {
+    throw new Error("You need to be signed in to manage automations.");
+  }
+
+  const supabase = await createSupabaseServerClient("mutate");
+
+  const { data: automation, error } = await supabase
+    .from("automations")
+    .select("id, slug, user_id")
+    .eq("id", automationId)
+    .maybeSingle();
+
+  if (error) {
+    throw new Error(`Unable to load automation: ${error.message}`);
+  }
+
+  if (!automation || automation.user_id !== user.id) {
+    throw new Error("You can only delete automations you created.");
+  }
+
+  const { error: deleteError } = await supabase
+    .from("automations")
+    .delete()
+    .eq("id", automationId);
+
+  if (deleteError) {
+    throw new Error(`Unable to delete automation: ${deleteError.message}`);
+  }
+
+  revalidatePath("/");
+  revalidatePath("/automations");
+  revalidatePath("/dashboard");
+  if (automation.slug) {
+    revalidatePath(`/automations/${automation.slug}`);
+  }
+}
+
 export async function toggleSubscriptionAction(
   type: SubscriptionType,
   active: boolean
@@ -287,13 +376,7 @@ export async function toggleSubscriptionAction(
 
   await upsertProfileFromSession(user);
 
-  if (isMockMode) {
-    setMockSubscriptionPreference(user.id, type, active);
-    revalidatePath("/dashboard");
-    return;
-  }
-
-  const supabase = await createSupabaseServerClient();
+  const supabase = await createSupabaseServerClient("mutate");
 
   const { data: existing, error } = await supabase
     .from("subscriptions")
@@ -331,17 +414,13 @@ export async function toggleSubscriptionAction(
     }
   }
 
-  revalidatePath("/dashboard");
+  revalidatePath("/settings");
 }
 
 async function generateUniqueSlug(title: string) {
   const slugBase = slugify(title);
   let slug = slugBase;
   let attempts = 1;
-
-  if (isMockMode) {
-    return slug;
-  }
 
   const supabase = await createSupabaseServerClient();
 
