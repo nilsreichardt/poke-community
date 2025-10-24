@@ -28,6 +28,11 @@ type AutomationWithRelations = AutomationRecord & {
   user_vote?: number;
 };
 
+export type AutomationForEditing = Pick<
+  AutomationRecord,
+  "id" | "title" | "summary" | "description" | "prompt" | "tags" | "slug" | "updated_at" | "created_at"
+>;
+
 type ListAutomationsOptions = {
   search?: string;
   limit?: number;
@@ -145,6 +150,39 @@ export async function getAutomationsForCurrentUser(): Promise<
       user_vote: userVote,
     };
   });
+}
+
+export async function getAutomationForEditing(
+  automationId: string
+): Promise<AutomationForEditing | null> {
+  const user = await getCurrentUser();
+
+  if (!user) {
+    return null;
+  }
+
+  const supabase = await createSupabaseServerClient();
+
+  const { data, error } = await supabase
+    .from("automations")
+    .select(
+      "id, title, summary, description, prompt, tags, slug, updated_at, created_at, user_id"
+    )
+    .eq("id", automationId)
+    .maybeSingle();
+
+  if (error) {
+    throw new Error(`Unable to load automation: ${error.message}`);
+  }
+
+  if (!data || data.user_id !== user.id) {
+    return null;
+  }
+
+  const { user_id: _userId, ...automation } = data;
+  void _userId;
+
+  return automation;
 }
 
 export async function getAutomationBySlug(

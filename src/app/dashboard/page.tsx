@@ -64,7 +64,7 @@ export default async function DashboardPage() {
             return (
               <Card
                 key={automation.id}
-                className="border-border/80 bg-card/60 shadow-sm"
+                className="border-border/80 bg-card/60 shadow-sm pb-0"
               >
                 <CardHeader className="space-y-2">
                   <div className="flex items-start justify-between gap-4">
@@ -89,7 +89,7 @@ export default async function DashboardPage() {
                     {automation.description || "No description provided."}
                   </p>
                 </CardContent>
-                <CardFooter className="flex items-center justify-between gap-3 border-t border-border/60 bg-muted/40">
+                <CardFooter className="flex items-center justify-between gap-3 border-t border-border/60 bg-muted/40 pb-6">
                   <div className="text-xs text-muted-foreground">
                     Last updated{" "}
                     {automation.updated_at
@@ -102,6 +102,11 @@ export default async function DashboardPage() {
                     <Button asChild size="sm" variant="outline">
                       <Link href={`/automations/${automation.slug}`}>
                         View
+                      </Link>
+                    </Button>
+                    <Button asChild size="sm" variant="outline">
+                      <Link href={`/dashboard/${automation.id}/edit`}>
+                        Edit
                       </Link>
                     </Button>
                     <DeleteAutomationButton
@@ -118,4 +123,3 @@ export default async function DashboardPage() {
     </div>
   );
 }
-

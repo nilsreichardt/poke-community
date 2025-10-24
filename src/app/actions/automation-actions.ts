@@ -250,6 +250,123 @@ export async function createAutomationAction(
   };
 }
 
+export async function updateAutomationAction(
+  _prevState: AutomationFormState,
+  formData: FormData
+): Promise<AutomationFormState> {
+  const automationId = formData.get("automationId");
+  const submittedValues = formDataToAutomationFormValues(formData);
+  const validation = validateAutomationForm(submittedValues);
+  const nextValues = parsedToFormValues(validation.data);
+
+  if (typeof automationId !== "string" || !automationId) {
+    return {
+      status: "error",
+      message: "Missing automation identifier.",
+      values: nextValues,
+      fieldErrors: {
+        ...validation.fieldErrors,
+      },
+    };
+  }
+
+  if (!validation.success) {
+    return {
+      status: "error",
+      message: "Please review the form fields and try again.",
+      values: nextValues,
+      fieldErrors: validation.fieldErrors,
+    };
+  }
+
+  const normalized = validation.data;
+  const user = await getCurrentUser();
+
+  if (!user) {
+    return {
+      status: "error",
+      message: "You need to sign in before updating an automation.",
+      values: nextValues,
+      fieldErrors: {},
+    };
+  }
+
+  await upsertProfileFromSession(user);
+
+  const normalizedTags: string[] | null = normalized.tags
+    ? normalized.tags
+        .split(",")
+        .map((tag) => tag.trim())
+        .filter(Boolean)
+    : null;
+
+  const supabase = await createSupabaseServerClient("mutate");
+
+  const { data: existing, error: fetchError } = await supabase
+    .from("automations")
+    .select("id, slug, user_id")
+    .eq("id", automationId)
+    .maybeSingle();
+
+  if (fetchError) {
+    return {
+      status: "error",
+      message: `Unable to load automation: ${fetchError.message}`,
+      values: nextValues,
+      fieldErrors: {},
+    };
+  }
+
+  if (!existing || existing.user_id !== user.id) {
+    return {
+      status: "error",
+      message: "You can only edit automations you created.",
+      values: nextValues,
+      fieldErrors: {},
+    };
+  }
+
+  const { data: updated, error: updateError } = await supabase
+    .from("automations")
+    .update({
+      title: normalized.title,
+      summary: normalized.summary,
+      description: normalized.description ?? "",
+      prompt: normalized.prompt,
+      tags: normalizedTags,
+      updated_at: new Date().toISOString(),
+    })
+    .eq("id", automationId)
+    .select("slug")
+    .maybeSingle();
+
+  if (updateError) {
+    return {
+      status: "error",
+      message: `Unable to update automation: ${updateError.message}`,
+      values: nextValues,
+      fieldErrors: {},
+    };
+  }
+
+  const slug = updated?.slug ?? existing.slug;
+
+  revalidatePath("/");
+  revalidatePath("/automations");
+  revalidatePath("/dashboard");
+  if (slug) {
+    revalidatePath(`/automations/${slug}`);
+  }
+
+  return {
+    status: "success",
+    message: "Automation updated!",
+    values: nextValues,
+    fieldErrors: {},
+    slug,
+  };
+}
+
 export async function toggleVoteAction(
   automationId: string,
   value: 1 | -1
