@@ -1,5 +1,4 @@
 import { createSupabaseServiceRoleClient } from "@/lib/supabase/server";
-import type { AutomationCategory } from "@/lib/supabase/types";
 import { resendClient } from "./resend";
 import { isMockMode } from "@/lib/config";
 
@@ -9,7 +8,6 @@ const SITE_URL =
 type AutomationAnnouncementInput = {
   automationTitle: string;
   automationSlug: string;
-  category: AutomationCategory;
 };
 
 type TrendingDigestInput = {
@@ -58,7 +56,7 @@ export async function sendAutomationAnnouncement(
     await resendClient.emails.send({
       from: "poke.community <updates@poke.community>",
       to: recipients,
-      subject: `New ${input.category} on poke.community: ${input.automationTitle}`,
+      subject: `New automation on poke.community: ${input.automationTitle}`,
       html: buildAnnouncementHtml(input.automationTitle, automationUrl),
       text: buildAnnouncementText(input.automationTitle, automationUrl),
     });

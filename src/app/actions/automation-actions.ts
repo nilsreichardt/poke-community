@@ -22,12 +22,10 @@ import type { AuthFormState, AutomationFormState } from "./form-states";
 
 const automationSchema = z.object({
   title: z.string().min(4).max(120),
-  summary: z.string().max(180).optional(),
-  description: z.string().min(24),
+  summary: z.string().min(1).max(180),
+  description: z.string().min(24).nullable(),
   prompt: z.string().min(10),
-  setup_details: z.string().min(10),
   tags: z.string().optional(),
-  category: z.enum(["automation", "template", "integration"]).default("automation"),
 });
 
 const passwordSignInSchema = z.object({
@@ -106,14 +104,18 @@ export async function createAutomationAction(
   _prevState: AutomationFormState,
   formData: FormData
 ): Promise<AutomationFormState> {
+  const summary = formData.get("summary");
+  const description = formData.get("description");
+
   const parsed = automationSchema.safeParse({
     title: formData.get("title"),
-    summary: formData.get("summary"),
-    description: formData.get("description"),
+    summary: typeof summary === "string" ? summary.trim() : "",
+    description:
+      typeof description === "string" && description.trim().length
+        ? description.trim()
+        : null,
     prompt: formData.get("prompt"),
-    setup_details: formData.get("setup_details"),
     tags: formData.get("tags"),
-    category: formData.get("category") ?? "automation",
   });
 
   if (!parsed.success) {
@@ -144,12 +146,10 @@ export async function createAutomationAction(
   if (isMockMode) {
     const automation = createAutomationMock({
       title: parsed.data.title,
-      summary: parsed.data.summary ?? null,
+      summary: parsed.data.summary,
       description: parsed.data.description,
       prompt: parsed.data.prompt,
-      setup_details: parsed.data.setup_details,
       tags: normalizedTags,
-      category: parsed.data.category,
       user_id: user.id,
     });
 
@@ -168,12 +168,12 @@ export async function createAutomationAction(
 
   const { error } = await supabase.from("automations").insert({
     title: parsed.data.title,
-    summary: parsed.data.summary ?? null,
+    summary: parsed.data.summary,
     description: parsed.data.description,
     prompt: parsed.data.prompt,
-    setup_details: parsed.data.setup_details,
+    setup_details: null,
     tags: normalizedTags,
-    category: parsed.data.category,
+    category: "automation",
     slug,
     user_id: user.id,
   });
@@ -188,7 +188,6 @@ export async function createAutomationAction(
   await sendAutomationAnnouncement({
     automationTitle: parsed.data.title,
     automationSlug: slug,
-    category: parsed.data.category,
   });
 
   revalidatePath("/");

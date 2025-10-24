@@ -19,9 +19,9 @@ export interface Database {
           updated_at: string;
           title: string;
           summary: string | null;
-          description: string;
+          description: string | null;
           prompt: string;
-          setup_details: string;
+          setup_details: string | null;
           slug: string;
           tags: string[] | null;
           category: AutomationCategory;
@@ -34,9 +34,9 @@ export interface Database {
           updated_at?: string;
           title: string;
           summary?: string | null;
-          description: string;
+          description?: string | null;
           prompt: string;
-          setup_details: string;
+          setup_details?: string | null;
           slug: string;
           tags?: string[] | null;
           category?: AutomationCategory;
@@ -47,9 +47,9 @@ export interface Database {
           updated_at?: string;
           title?: string;
           summary?: string | null;
-          description?: string;
+          description?: string | null;
           prompt?: string;
-          setup_details?: string;
+          setup_details?: string | null;
           slug?: string;
           tags?: string[] | null;
           category?: AutomationCategory;
@@ -131,9 +131,9 @@ export interface Database {
           title: string;
           slug: string;
           summary: string | null;
-          description: string;
+          description: string | null;
           prompt: string;
-          setup_details: string;
+          setup_details: string | null;
           tags: string[] | null;
           category: AutomationCategory;
           created_at: string;

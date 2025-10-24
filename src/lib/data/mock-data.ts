@@ -358,12 +358,10 @@ export function getSubscriptionPreferencesMock(userId: string) {
 
 export function createAutomationMock(input: {
   title: string;
-  summary?: string | null;
-  description: string;
+  summary: string;
+  description: string | null;
   prompt: string;
-  setup_details: string;
   tags?: string[] | null;
-  category: string;
   user_id: string;
 }) {
   const baseSlug = slugify(input.title);
@@ -389,13 +387,13 @@ export function createAutomationMock(input: {
     created_at: now,
     updated_at: now,
     title: input.title,
-    summary: input.summary ?? null,
+    summary: input.summary,
     description: input.description,
     prompt: input.prompt,
-    setup_details: input.setup_details,
+    setup_details: null,
     slug,
     tags: input.tags ?? null,
-    category: (input.category as AutomationRecord["category"]) ?? "automation",
+    category: "automation",
     user_id: input.user_id,
     vote_total: 0,
   };

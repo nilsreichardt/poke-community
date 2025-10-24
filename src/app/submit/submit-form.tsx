@@ -33,34 +33,22 @@ export function AutomationForm() {
             required
           />
         </Field>
-        <Field label="Category" required>
-          <select
-            name="category"
-            className="h-10 w-full rounded-md border border-border bg-background px-3 text-sm shadow-sm focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
-            defaultValue="automation"
-          >
-            <option value="automation">Automation</option>
-            <option value="template">Template</option>
-            <option value="integration">Integration</option>
-          </select>
-        </Field>
       </div>
-      <Field label="Summary" hint="One-liner that appears in lists">
+      <Field label="Summary" required hint="One-liner that appears in lists">
         <Input
           name="summary"
           placeholder="Who is this for and what problem does it solve?"
           maxLength={180}
+          required
         />
       </Field>
       <Field
         label="Description"
-        required
         hint="Share the workflow, key steps, and any setup instructions. Markdown is supported."
       >
         <Textarea
           name="description"
           rows={8}
-          required
           placeholder={
             "Explain the automation in detail so others can reproduce it."
           }
@@ -76,18 +64,6 @@ export function AutomationForm() {
           rows={5}
           required
           placeholder="Write a personalised welcome email for {{customer_name}} highlighting the onboarding checklist and assign follow-up tasks to the success team."
-        />
-      </Field>
-      <Field
-        label="Setup details"
-        required
-        hint="Anything the community should prepare before using the prompt (e.g. custom MCPs, variables, integrations). Markdown supported."
-      >
-        <Textarea
-          name="setup_details"
-          rows={6}
-          required
-          placeholder="### Pre-reqs&#10;- Enable the CRM MCP and map the `customer_name` property&#10;- Create a shared Slack channel #onboarding&#10;&#10;### Tips&#10;- Update the email tone by editing the first paragraph."
         />
       </Field>
       <Field label="Tags" hint="Comma separated tags such as marketing, onboarding">

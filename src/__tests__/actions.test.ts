@@ -23,9 +23,7 @@ describe("server actions in mock mode", () => {
     formData.set("summary", "Coordinates launches across channels.");
     formData.set("description", "Full walkthrough of our launch playbook.");
     formData.set("prompt", "Draft the launch announcement for {{audience}} and schedule social posts across LinkedIn, X, and email.");
-    formData.set("setup_details", "### Pre-reqs\\n- Connect the social MCP\\n- Configure the email MCP with template `launch-announce`\\n\\n### Tips\\nSet {{audience}} to 'beta customers' for soft launches.");
     formData.set("tags", "marketing, orchestration");
-    formData.set("category", "automation");
 
     const result = await createAutomationAction(automationFormInitialState, formData);
     expect(result.status).toBe("success");

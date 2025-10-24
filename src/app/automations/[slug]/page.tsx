@@ -36,9 +36,6 @@ export default async function AutomationPage({ params }: AutomationPageProps) {
       <header className="flex flex-col gap-6 rounded-2xl border border-border bg-card/70 p-8 shadow-sm sm:flex-row sm:items-start sm:justify-between">
         <div className="space-y-4">
           <div className="flex flex-wrap items-center gap-3">
-            <Badge variant="secondary" className="text-xs uppercase">
-              {automation.category}
-            </Badge>
             <span className="text-xs uppercase tracking-wide text-muted-foreground">
               Shared {format(new Date(automation.created_at), "PP")}
             </span>
@@ -79,23 +76,16 @@ export default async function AutomationPage({ params }: AutomationPageProps) {
 
       <PromptBlock prompt={automation.prompt} />
 
-      <section className="space-y-4 rounded-2xl border border-border bg-card/40 p-8 text-sm leading-relaxed text-foreground">
-        <h2 className="text-lg font-semibold">Automation overview</h2>
-        <div className="space-y-4">
-          <ReactMarkdown components={markdownComponents}>
-            {automation.description}
-          </ReactMarkdown>
-        </div>
-      </section>
-
-      <section className="space-y-4 rounded-2xl border border-border bg-card/40 p-8 text-sm leading-relaxed text-foreground">
-        <h2 className="text-lg font-semibold">Setup details</h2>
-        <div className="space-y-4">
-          <ReactMarkdown components={markdownComponents}>
-            {automation.setup_details}
-          </ReactMarkdown>
-        </div>
-      </section>
+      {automation.description ? (
+        <section className="space-y-4 rounded-2xl border border-border bg-card/40 p-8 text-sm leading-relaxed text-foreground">
+          <h2 className="text-lg font-semibold">Automation overview</h2>
+          <div className="space-y-4">
+            <ReactMarkdown components={markdownComponents}>
+              {automation.description}
+            </ReactMarkdown>
+          </div>
+        </section>
+      ) : null}
     </article>
   );
 }
