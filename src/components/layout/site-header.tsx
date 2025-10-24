@@ -8,11 +8,13 @@ import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigge
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { signOutAction } from "@/app/actions/automation-actions";
 import { useFormStatus } from "react-dom";
+import { HomeIcon, MagnifyingGlassIcon } from "@heroicons/react/24/solid";
+import { PlusCircleIcon } from "@heroicons/react/24/outline";
 
 const navigation = [
-  { href: "/", label: "Home" },
-  { href: "/automations", label: "Discover" },
-  { href: "/submit", label: "Share" },
+  { href: "/", label: "Home", icon: HomeIcon },
+  { href: "/automations", label: "Discover", icon: MagnifyingGlassIcon },
+  { href: "/submit", label: "Share", icon: PlusCircleIcon },
 ];
 
 const isProduction = process.env.NODE_ENV === "production";
@@ -43,10 +45,11 @@ export function SiteHeader() {
               <Link
                 key={item.href}
                 href={item.href}
-                className={`transition hover:text-primary ${isActive ? "text-primary" : "text-muted-foreground"
+                className={`flex items-center transition hover:text-primary ${isActive ? "text-primary" : "text-muted-foreground"
                   }`}
               >
-                {item.label}
+                <item.icon className="h-5 w-5 mr-2" aria-hidden="true" />
+                <span>{item.label}</span>
               </Link>
             );
           })}
