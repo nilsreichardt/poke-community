@@ -1,5 +1,6 @@
 import { createSupabaseServiceRoleClient } from "@/lib/supabase/server";
 import { resendClient } from "./resend";
+import { createUnsubscribeUrl } from "./unsubscribe";
 
 const SITE_URL =
   process.env.NEXT_PUBLIC_SITE_URL ?? "https://poke.community";
@@ -14,6 +15,7 @@ type TrendingDigestInput = {
 };
 
 type SubscriptionRowWithProfile = {
+  id: string;
   user_id: string;
   profiles: {
     email: string | null;
@@ -26,11 +28,12 @@ export async function sendAutomationAnnouncement(
   if (!resendClient) {
     return;
   }
+  const client = resendClient;
 
   const supabase = createSupabaseServiceRoleClient();
   const { data, error } = await supabase
     .from("subscriptions")
-    .select("user_id, profiles!inner(email)")
+    .select("id, user_id, profiles!inner(email)")
     .eq("type", "new")
     .eq("active", true)
     .returns<SubscriptionRowWithProfile[]>();
@@ -42,8 +45,24 @@ export async function sendAutomationAnnouncement(
 
   const recipients =
     data
-      ?.map((subscription) => subscription.profiles?.email)
-      .filter((email): email is string => Boolean(email)) ?? [];
+      ?.map((subscription) => {
+        const email = subscription.profiles?.email;
+
+        if (!email) {
+          return null;
+        }
+
+        return {
+          email,
+          unsubscribeUrl: createUnsubscribeUrl(subscription.id, "new"),
+        };
+      })
+      .filter(
+        (
+          subscription
+        ): subscription is { email: string; unsubscribeUrl: string } =>
+          subscription !== null
+      ) ?? [];
 
   if (recipients.length === 0) {
     return;
@@ -52,31 +71,52 @@ export async function sendAutomationAnnouncement(
   const automationUrl = `${SITE_URL.replace(/\/$/, "")}/automations/${input.automationSlug}`;
 
   try {
-    await resendClient.emails.send({
-      from: "poke.community <updates@poke.community>",
-      to: recipients,
-      subject: `New automation on poke.community: ${input.automationTitle}`,
-      html: buildAnnouncementHtml(input.automationTitle, automationUrl),
-      text: buildAnnouncementText(input.automationTitle, automationUrl),
-    });
+    await Promise.all(
+      recipients.map(async ({ email, unsubscribeUrl }) => {
+        await client.emails.send({
+          from: "poke.community <updates@poke.community>",
+          to: email,
+          subject: `New automation on poke.community: ${input.automationTitle}`,
+          html: buildAnnouncementHtml(
+            input.automationTitle,
+            automationUrl,
+            unsubscribeUrl
+          ),
+          text: buildAnnouncementText(
+            input.automationTitle,
+            automationUrl,
+            unsubscribeUrl
+          ),
+          headers: buildUnsubscribeHeaders(unsubscribeUrl),
+        });
+      })
+    );
   } catch (sendError) {
     console.error("Unable to send automation announcement", sendError);
   }
 }
 
-function buildAnnouncementHtml(title: string, automationUrl: string) {
+function buildAnnouncementHtml(
+  title: string,
+  automationUrl: string,
+  unsubscribeUrl: string
+) {
   return [
     `<p>Hey community 👋</p>`,
     `<p>A new automation just dropped on <strong>poke.community</strong>:</p>`,
     `<p><a href="${automationUrl}">${title}</a></p>`,
     `<p>Give it a look, vote, and let the creator know what you think.</p>`,
-    `<p>If you no longer want to receive these updates you can manage your notification preferences from your profile.</p>`,
+    `<p>If you no longer want to receive these updates you can <a href="${unsubscribeUrl}">unsubscribe instantly</a>.</p>`,
     `<hr />`,
     `<small>poke.community is an independent community project and not affiliated with poke.</small>`,
   ].join("");
 }
 
-function buildAnnouncementText(title: string, automationUrl: string) {
+function buildAnnouncementText(
+  title: string,
+  automationUrl: string,
+  unsubscribeUrl: string
+) {
   return [
     `Hey community,`,
     ``,
@@ -86,7 +126,7 @@ function buildAnnouncementText(title: string, automationUrl: string) {
     ``,
     `Vote and share your thoughts with the creator.`,
     ``,
-    `To unsubscribe, update your notification preferences in your profile.`,
+    `To unsubscribe instantly, visit: ${unsubscribeUrl}`,
     ``,
     `poke.community is an independent community project and not affiliated with poke.`,
   ].join("\n");
@@ -98,11 +138,12 @@ export async function sendTrendingDigest({
   if (!resendClient || automations.length === 0) {
     return;
   }
+  const client = resendClient;
 
   const supabase = createSupabaseServiceRoleClient();
   const { data, error } = await supabase
     .from("subscriptions")
-    .select("user_id, profiles!inner(email)")
+    .select("id, user_id, profiles!inner(email)")
     .eq("type", "trending")
     .eq("active", true)
     .returns<SubscriptionRowWithProfile[]>();
@@ -114,8 +155,24 @@ export async function sendTrendingDigest({
 
   const recipients =
     data
-      ?.map((subscription) => subscription.profiles?.email)
-      .filter((email): email is string => Boolean(email)) ?? [];
+      ?.map((subscription) => {
+        const email = subscription.profiles?.email;
+
+        if (!email) {
+          return null;
+        }
+
+        return {
+          email,
+          unsubscribeUrl: createUnsubscribeUrl(subscription.id, "trending"),
+        };
+      })
+      .filter(
+        (
+          subscription
+        ): subscription is { email: string; unsubscribeUrl: string } =>
+          subscription !== null
+      ) ?? [];
 
   if (!recipients.length) {
     return;
@@ -129,22 +186,57 @@ export async function sendTrendingDigest({
     .join("");
 
   try {
-    await resendClient.emails.send({
-      from: "poke.community <updates@poke.community>",
-      to: recipients,
-      subject: "Trending automations on poke.community",
-      html: `
-        <p>Here are the automations people loved this week:</p>
-        <ul>${formattedList}</ul>
-        <p>Vote for your favorites or submit your own automation on poke.community.</p>
-        <hr />
-        <small>poke.community is an independent project and not affiliated with poke.</small>
-      `,
-      text: automations
-        .map((automation, index) => `${index + 1}. ${automation.title} (${automation.vote_total} votes)`)
-        .join("\n"),
-    });
+    await Promise.all(
+      recipients.map(async ({ email, unsubscribeUrl }) => {
+        await client.emails.send({
+          from: "poke.community <updates@poke.community>",
+          to: email,
+          subject: "Trending automations on poke.community",
+          html: buildTrendingHtml(formattedList, unsubscribeUrl),
+          text: buildTrendingText(automations, unsubscribeUrl),
+          headers: buildUnsubscribeHeaders(unsubscribeUrl),
+        });
+      })
+    );
   } catch (sendError) {
     console.error("Unable to send trending digest", sendError);
   }
+}
+
+function buildTrendingHtml(listItems: string, unsubscribeUrl: string) {
+  return [
+    `<p>Here are the automations people loved this week:</p>`,
+    `<ul>${listItems}</ul>`,
+    `<p>Vote for your favorites or submit your own automation on poke.community.</p>`,
+    `<p>If you'd rather not receive trending updates you can <a href="${unsubscribeUrl}">unsubscribe here</a>.</p>`,
+    `<hr />`,
+    `<small>poke.community is an independent project and not affiliated with poke.</small>`,
+  ].join("");
+}
+
+function buildTrendingText(
+  automations: TrendingDigestInput["automations"],
+  unsubscribeUrl: string
+) {
+  return [
+    `Here are the automations people loved this week:`,
+    ``,
+    ...automations.map(
+      (automation, index) =>
+        `${index + 1}. ${automation.title} (${automation.vote_total} votes)`
+    ),
+    ``,
+    `Submit your own automations or vote on others at poke.community.`,
+    ``,
+    `To unsubscribe instantly, visit: ${unsubscribeUrl}`,
+    ``,
+    `poke.community is an independent project and not affiliated with poke.`,
+  ].join("\n");
+}
+
+function buildUnsubscribeHeaders(unsubscribeUrl: string) {
+  return {
+    "List-Unsubscribe": `<${unsubscribeUrl}>`,
+    "List-Unsubscribe-Post": "List-Unsubscribe=One-Click",
+  };
 }
