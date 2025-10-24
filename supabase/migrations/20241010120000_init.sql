@@ -19,17 +19,11 @@ create table if not exists public.automations (
   summary text,
   description text not null,
   prompt text not null,
-  setup_details text not null,
   slug text not null unique,
   tags text[],
-  category text not null default 'automation',
   user_id uuid not null references public.profiles (id) on delete cascade,
   vote_total integer not null default 0
 );
-
-alter table public.automations
-  add constraint automations_category_check
-  check (category in ('automation', 'template', 'integration'));
 
 create trigger set_automations_updated_at
   before update on public.automations
@@ -61,9 +55,7 @@ select
   a.summary,
   a.description,
   a.prompt,
-  a.setup_details,
   a.tags,
-  a.category,
   a.created_at,
   a.updated_at,
   a.vote_total,
