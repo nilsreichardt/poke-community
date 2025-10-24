@@ -1,9 +1,27 @@
 import type { Metadata } from "next";
+import { absoluteUrl, siteMetadata } from "@/lib/seo";
+
+const pageTitle = "Privacy Policy";
+const pageDescription =
+  "Learn how poke.community processes personal data, the partners we rely on, and the rights you have under the GDPR.";
 
 export const metadata: Metadata = {
-  title: "Privacy Policy — poke.community",
-  description:
-    "How poke.community processes personal data, which services we rely on, and the rights you have under the GDPR.",
+  title: `${pageTitle} — ${siteMetadata.shortName}`,
+  description: pageDescription,
+  alternates: {
+    canonical: absoluteUrl("/privacy"),
+  },
+  openGraph: {
+    title: `${pageTitle} — ${siteMetadata.shortName}`,
+    description: pageDescription,
+    url: absoluteUrl("/privacy"),
+    type: "website",
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: `${pageTitle} — ${siteMetadata.shortName}`,
+    description: pageDescription,
+  },
 };
 
 export default function PrivacyPolicyPage() {

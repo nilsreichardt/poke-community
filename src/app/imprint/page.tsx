@@ -1,9 +1,27 @@
 import type { Metadata } from "next";
+import { absoluteUrl, siteMetadata } from "@/lib/seo";
+
+const pageTitle = "Imprint";
+const pageDescription =
+  "Legal disclosure and provider details for poke.community, including contact information and responsible parties.";
 
 export const metadata: Metadata = {
-  title: "Imprint — poke.community",
-  description:
-    "Legal disclosure and provider information for poke.community, operated by Nils Reichardt Agency.",
+  title: `${pageTitle} — ${siteMetadata.shortName}`,
+  description: pageDescription,
+  alternates: {
+    canonical: absoluteUrl("/imprint"),
+  },
+  openGraph: {
+    title: `${pageTitle} — ${siteMetadata.shortName}`,
+    description: pageDescription,
+    url: absoluteUrl("/imprint"),
+    type: "website",
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: `${pageTitle} — ${siteMetadata.shortName}`,
+    description: pageDescription,
+  },
 };
 
 export default function ImprintPage() {

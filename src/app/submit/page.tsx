@@ -1,7 +1,32 @@
+import type { Metadata } from "next";
 import Link from "next/link";
 import { getCurrentUser } from "@/lib/data/automations";
 import { Button } from "@/components/ui/button";
 import { AutomationForm } from "./submit-form";
+import { absoluteUrl, siteMetadata } from "@/lib/seo";
+
+const pageTitle = "Share a Poke automation";
+const pageDescription =
+  "Publish your automation, prompt, or template to the poke.community library so other builders can discover and remix it.";
+
+export const metadata: Metadata = {
+  title: `${pageTitle} — ${siteMetadata.shortName}`,
+  description: pageDescription,
+  alternates: {
+    canonical: absoluteUrl("/submit"),
+  },
+  openGraph: {
+    title: `${pageTitle} — ${siteMetadata.shortName}`,
+    description: pageDescription,
+    url: absoluteUrl("/submit"),
+    type: "website",
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: `${pageTitle} — ${siteMetadata.shortName}`,
+    description: pageDescription,
+  },
+};
 
 export const dynamic = "force-dynamic";
 

@@ -1,9 +1,34 @@
+import type { Metadata } from "next";
 import Link from "next/link";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { AutomationCard } from "@/components/automation/automation-card";
 import { getAutomations } from "@/lib/data/automations";
 import type { AutomationCategory } from "@/lib/supabase/types";
+import { absoluteUrl, siteMetadata } from "@/lib/seo";
+
+const pageTitle = "Community automations";
+const pageDescription =
+  "Browse every automation shared by the poke.community builders. Filter by category, search by keyword, and find the perfect workflow to remix.";
+
+export const metadata: Metadata = {
+  title: `${pageTitle}`,
+  description: pageDescription,
+  alternates: {
+    canonical: absoluteUrl("/automations"),
+  },
+  openGraph: {
+    title: `${pageTitle} — ${siteMetadata.shortName}`,
+    description: pageDescription,
+    type: "website",
+    url: absoluteUrl("/automations"),
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: `${pageTitle} — ${siteMetadata.shortName}`,
+    description: pageDescription,
+  },
+};
 
 type AutomationsPageProps = {
   searchParams?: Promise<Record<string, string | string[] | undefined>>;

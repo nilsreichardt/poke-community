@@ -12,6 +12,7 @@ import {
   getTrendingAutomationsMock,
   getSubscriptionPreferencesMock,
   getMockUser,
+  listAutomationSlugsMock,
 } from "@/lib/data/mock-data";
 
 type AutomationRowWithRelations = AutomationRecord & {
@@ -115,7 +116,8 @@ export async function getAutomations(
     const votes = Array.isArray(item.votes) ? item.votes : [];
     const userVote =
       votes.find((vote) => vote.user_id === user?.id)?.value ?? 0;
-    const { votes: _votes, ...rest } = item;
+    const { votes: _unusedVotes, ...rest } = item;
+    void _unusedVotes;
 
     return {
       ...rest,
@@ -156,7 +158,8 @@ export async function getAutomationBySlug(
   const votes = Array.isArray(automation.votes) ? automation.votes : [];
   const userVote =
     votes.find((vote) => vote.user_id === user?.id)?.value ?? 0;
-  const { votes: _votes, ...rest } = automation;
+  const { votes: _unusedVotes, ...rest } = automation;
+  void _unusedVotes;
 
   return {
     ...rest,
@@ -221,7 +224,8 @@ export async function getTrendingAutomations(limit = 6) {
       const votes = Array.isArray(item.votes) ? item.votes : [];
       const userVote =
         votes.find((vote) => vote.user_id === user?.id)?.value ?? 0;
-      const { votes: _votes, ...rest } = item;
+      const { votes: _unusedVotes, ...rest } = item;
+      void _unusedVotes;
 
       return {
         ...rest,
@@ -229,6 +233,37 @@ export async function getTrendingAutomations(limit = 6) {
         user_vote: userVote,
       };
     });
+}
+
+type AutomationSlugSummary = {
+  slug: string;
+  created_at: string;
+  updated_at: string | null;
+};
+
+export async function listAutomationSlugs(): Promise<
+  AutomationSlugSummary[]
+> {
+  if (isMockMode) {
+    return listAutomationSlugsMock();
+  }
+
+  const supabase = await createSupabaseServerClient();
+
+  const { data, error } = await supabase
+    .from("automations")
+    .select("slug, created_at, updated_at")
+    .order("updated_at", { ascending: false })
+    .order("created_at", { ascending: false })
+    .returns<AutomationSlugSummary[]>();
+
+  if (error) {
+    throw new Error(
+      `Unable to list automation slugs: ${error.message}`
+    );
+  }
+
+  return data ?? [];
 }
 
 export async function getSubscriptionPreferences() {

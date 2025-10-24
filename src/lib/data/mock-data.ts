@@ -327,6 +327,14 @@ export function getAutomationBySlugMock(slug: string) {
   return automation ? attachDerivedFields(automation, userId) : null;
 }
 
+export function listAutomationSlugsMock() {
+  return mockState.automations.map((automation) => ({
+    slug: automation.slug,
+    created_at: automation.created_at,
+    updated_at: automation.updated_at,
+  }));
+}
+
 export function getTrendingAutomationsMock(limit = 6) {
   const userId = mockState.currentUserId;
   const ranked = mockState.automations

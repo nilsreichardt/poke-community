@@ -6,6 +6,7 @@ import { SupabaseProvider } from "@/components/providers/supabase-provider";
 import { SiteHeader } from "@/components/layout/site-header";
 import { SiteFooter } from "@/components/layout/site-footer";
 import { isMockMode } from "@/lib/config";
+import { metadataBaseUrl, siteMetadata, absoluteUrl } from "@/lib/seo";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -18,10 +19,39 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  metadataBase: new URL("https://poke.community"),
-  title: "poke.community — Community-curated Poke automations",
-  description:
-    "Discover and share Poke automations built by the community. Vote, explore trends, and stay in the loop with the latest workflow inspiration.",
+  metadataBase: metadataBaseUrl(),
+  title: {
+    default: `${siteMetadata.name} — Community-curated Poke automations`,
+    template: `%s — ${siteMetadata.shortName}`,
+  },
+  description: siteMetadata.description,
+  keywords: siteMetadata.keywords,
+  openGraph: {
+    type: "website",
+    siteName: siteMetadata.name,
+    title: `${siteMetadata.name} — Community-curated Poke automations`,
+    description: siteMetadata.description,
+    locale: siteMetadata.locale,
+    url: absoluteUrl(),
+    images: [
+      {
+        url: absoluteUrl(siteMetadata.defaultOgImage),
+        width: 1200,
+        height: 630,
+        alt: `${siteMetadata.name} — Community-curated Poke automations`,
+      },
+    ],
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: `${siteMetadata.name} — Community-curated Poke automations`,
+    description: siteMetadata.description,
+    images: [absoluteUrl(siteMetadata.defaultOgImage)],
+  },
+  robots: {
+    index: true,
+    follow: true,
+  },
 };
 
 export default async function RootLayout({

@@ -1,9 +1,27 @@
 import type { Metadata } from "next";
+import { absoluteUrl, siteMetadata } from "@/lib/seo";
+
+const pageTitle = "Terms of Service";
+const pageDescription =
+  "Review the terms that govern your use of poke.community and its community-powered automation features.";
 
 export const metadata: Metadata = {
-  title: "Terms of Service — poke.community",
-  description:
-    "Terms that govern your use of the poke.community platform and community features.",
+  title: `${pageTitle} — ${siteMetadata.shortName}`,
+  description: pageDescription,
+  alternates: {
+    canonical: absoluteUrl("/terms"),
+  },
+  openGraph: {
+    title: `${pageTitle} — ${siteMetadata.shortName}`,
+    description: pageDescription,
+    url: absoluteUrl("/terms"),
+    type: "website",
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: `${pageTitle} — ${siteMetadata.shortName}`,
+    description: pageDescription,
+  },
 };
 
 export default function TermsOfServicePage() {

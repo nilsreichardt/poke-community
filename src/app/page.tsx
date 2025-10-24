@@ -1,3 +1,4 @@
+import type { Metadata } from "next";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { AutomationCard } from "@/components/automation/automation-card";
@@ -5,6 +6,13 @@ import {
   getAutomations,
   getTrendingAutomations,
 } from "@/lib/data/automations";
+import { absoluteUrl } from "@/lib/seo";
+
+export const metadata: Metadata = {
+  alternates: {
+    canonical: absoluteUrl("/"),
+  },
+};
 
 const isProduction = process.env.NODE_ENV === "production";
 

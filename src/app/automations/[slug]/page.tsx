@@ -1,3 +1,4 @@
+import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import ReactMarkdown from "react-markdown";
 import type { Components } from "react-markdown";
@@ -7,6 +8,7 @@ import { VoteControls } from "@/components/automation/vote-controls";
 import { Badge } from "@/components/ui/badge";
 import { PromptBlock } from "@/components/automation/prompt-block";
 import { cn } from "@/lib/utils";
+import { absoluteUrl, siteMetadata } from "@/lib/seo";
 
 type AutomationPageParams = {
   slug: string;
@@ -17,6 +19,82 @@ type AutomationPageProps = {
 };
 
 export const dynamic = "force-dynamic";
+
+export async function generateMetadata({
+  params,
+}: AutomationPageProps): Promise<Metadata> {
+  const resolvedParams = params ? await params : null;
+
+  if (!resolvedParams?.slug) {
+    return {
+      title: "Automation not found",
+      description: "The automation you requested could not be located.",
+      robots: {
+        index: false,
+        follow: false,
+      },
+    };
+  }
+
+  const automation = await getAutomationBySlug(resolvedParams.slug);
+
+  if (!automation) {
+    return {
+      title: "Automation not found",
+      description: "The automation you requested could not be located.",
+      robots: {
+        index: false,
+        follow: false,
+      },
+      alternates: {
+        canonical: absoluteUrl(`/automations/${resolvedParams.slug}`),
+      },
+    };
+  }
+
+  const summary =
+    automation.summary ??
+    "Explore setup details, prompts, and community sentiment for this poke.community automation.";
+  const canonical = absoluteUrl(`/automations/${automation.slug}`);
+  const ogImageUrl = absoluteUrl(
+    `/automations/${automation.slug}/opengraph-image`
+  );
+
+  return {
+    title: `${automation.title} — ${siteMetadata.shortName}`,
+    description: summary,
+    alternates: {
+      canonical,
+    },
+    openGraph: {
+      type: "article",
+      title: `${automation.title} — ${siteMetadata.shortName}`,
+      description: summary,
+      url: canonical,
+      siteName: siteMetadata.name,
+      publishedTime: automation.created_at,
+      modifiedTime: automation.updated_at ?? automation.created_at,
+      authors: automation.profiles?.username
+        ? [automation.profiles.username]
+        : undefined,
+      tags: automation.tags ?? undefined,
+      images: [
+        {
+          url: ogImageUrl,
+          width: 1200,
+          height: 630,
+          alt: automation.title,
+        },
+      ],
+    },
+    twitter: {
+      card: "summary_large_image",
+      title: `${automation.title} — ${siteMetadata.shortName}`,
+      description: summary,
+      images: [ogImageUrl],
+    },
+  };
+}
 
 export default async function AutomationPage({ params }: AutomationPageProps) {
   const resolvedParams = params ? await params : null;
@@ -31,8 +109,14 @@ export default async function AutomationPage({ params }: AutomationPageProps) {
     notFound();
   }
 
+  const canonicalUrl = absoluteUrl(`/automations/${automation.slug}`);
+
   return (
     <article className="space-y-10">
+      <AutomationJsonLd
+        automation={automation}
+        canonicalUrl={canonicalUrl}
+      />
       <header className="flex flex-col gap-6 rounded-2xl border border-border bg-card/70 p-8 shadow-sm sm:flex-row sm:items-start sm:justify-between">
         <div className="space-y-4">
           <div className="flex flex-wrap items-center gap-3">
@@ -91,7 +175,7 @@ export default async function AutomationPage({ params }: AutomationPageProps) {
 }
 
 const markdownComponents: Components = {
-  p: ({ node: _node, className, children, ...props }) => (
+  p: ({ className, children, ...props }) => (
     <p
       {...props}
       className={cn("leading-relaxed text-foreground/90", className)}
@@ -99,7 +183,7 @@ const markdownComponents: Components = {
       {children}
     </p>
   ),
-  a: ({ node: _node, className, children, href, ...props }) => (
+  a: ({ className, children, href, ...props }) => (
     <a
       {...props}
       href={href}
@@ -113,7 +197,7 @@ const markdownComponents: Components = {
       {children}
     </a>
   ),
-  code: ({ node: _node, className, children, ...props }) => (
+  code: ({ className, children, ...props }) => (
     <code
       {...props}
       className={cn("rounded bg-muted px-1 py-0.5 text-xs", className)}
@@ -121,7 +205,7 @@ const markdownComponents: Components = {
       {children}
     </code>
   ),
-  ul: ({ node: _node, className, children, ...props }) => (
+  ul: ({ className, children, ...props }) => (
     <ul
       {...props}
       className={cn("ml-4 list-disc space-y-1", className)}
@@ -129,7 +213,7 @@ const markdownComponents: Components = {
       {children}
     </ul>
   ),
-  ol: ({ node: _node, className, children, ...props }) => (
+  ol: ({ className, children, ...props }) => (
     <ol
       {...props}
       className={cn("ml-4 list-decimal space-y-1", className)}
@@ -137,7 +221,7 @@ const markdownComponents: Components = {
       {children}
     </ol>
   ),
-  h2: ({ node: _node, className, children, ...props }) => (
+  h2: ({ className, children, ...props }) => (
     <h2
       {...props}
       className={cn("text-lg font-semibold text-foreground", className)}
@@ -145,7 +229,7 @@ const markdownComponents: Components = {
       {children}
     </h2>
   ),
-  h3: ({ node: _node, className, children, ...props }) => (
+  h3: ({ className, children, ...props }) => (
     <h3
       {...props}
       className={cn("text-base font-semibold text-foreground", className)}
@@ -154,3 +238,49 @@ const markdownComponents: Components = {
     </h3>
   ),
 };
+
+type AutomationForJsonLd = NonNullable<
+  Awaited<ReturnType<typeof getAutomationBySlug>>
+>;
+
+function AutomationJsonLd({
+  automation,
+  canonicalUrl,
+}: {
+  automation: AutomationForJsonLd;
+  canonicalUrl: string;
+}) {
+  const data = {
+    "@context": "https://schema.org",
+    "@type": "Article",
+    headline: automation.title,
+    abstract: automation.summary ?? undefined,
+    datePublished: automation.created_at,
+    dateModified: automation.updated_at ?? automation.created_at,
+    url: canonicalUrl,
+    mainEntityOfPage: canonicalUrl,
+    author: automation.profiles?.username
+      ? {
+          "@type": "Person",
+          name: automation.profiles.username,
+        }
+      : {
+          "@type": "Organization",
+          name: siteMetadata.name,
+        },
+    keywords: automation.tags?.length ? automation.tags : undefined,
+    interactionStatistic: {
+      "@type": "InteractionCounter",
+      interactionType: "https://schema.org/LikeAction",
+      userInteractionCount: automation.vote_total ?? 0,
+    },
+  };
+
+  return (
+    <script
+      type="application/ld+json"
+      suppressHydrationWarning
+      dangerouslySetInnerHTML={{ __html: JSON.stringify(data) }}
+    />
+  );
+}
