@@ -1,5 +1,8 @@
 import { cache } from "react";
-import { createSupabaseServerClient } from "@/lib/supabase/server";
+import {
+  createSupabaseServerClient,
+  createSupabaseServiceRoleClient,
+} from "@/lib/supabase/server";
 import type {
   AutomationRecord,
   SubscriptionType,
@@ -314,7 +317,7 @@ type AutomationSlugSummary = {
 export async function listAutomationSlugs(): Promise<
   AutomationSlugSummary[]
 > {
-  const supabase = await createSupabaseServerClient();
+  const supabase = createSupabaseServiceRoleClient();
 
   const { data, error } = await supabase
     .from("automations")

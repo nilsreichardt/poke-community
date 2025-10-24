@@ -1,8 +1,7 @@
+import { Suspense } from "react";
 import type { Metadata } from "next";
-import type { User } from "@supabase/supabase-js";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
-import { createSupabaseServerClient } from "@/lib/supabase/server";
 import { SupabaseProvider } from "@/components/providers/supabase-provider";
 import { SiteHeader } from "@/components/layout/site-header";
 import { SiteFooter } from "@/components/layout/site-footer";
@@ -54,31 +53,21 @@ export const metadata: Metadata = {
   },
 };
 
-export default async function RootLayout({
+export default function RootLayout({
   children,
 }: Readonly<{
   children: React.ReactNode;
 }>) {
-  let user: User | null = null;
-
-  try {
-    const supabase = await createSupabaseServerClient("readonly");
-    const { data, error } = await supabase.auth.getUser();
-    if (!error) {
-      user = data.user;
-    }
-  } catch (error) {
-    console.error("Unable to fetch current user", error);
-  }
-
   return (
     <html lang="en" suppressHydrationWarning>
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
       >
-        <SupabaseProvider initialUser={user}>
+        <SupabaseProvider initialUser={null}>
           <div className="flex min-h-screen flex-col bg-background text-foreground">
-            <SiteHeader />
+            <Suspense fallback={null}>
+              <SiteHeader />
+            </Suspense>
             <main className="flex-1">
               <div className="mx-auto w-full max-w-6xl px-4 py-10 sm:px-6">
                 {children}
