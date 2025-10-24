@@ -74,7 +74,7 @@ export async function sendAutomationAnnouncement(
     await Promise.all(
       recipients.map(async ({ email, unsubscribeUrl }) => {
         await client.emails.send({
-          from: "poke.community <updates@poke.community>",
+          from: "poke.community <updates@emails.poke.community>",
           to: email,
           subject: `New automation on poke.community: ${input.automationTitle}`,
           html: buildAnnouncementHtml(
