@@ -6,6 +6,7 @@ import { formatDistanceToNow } from "date-fns";
 import { Card, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import type { AutomationRecord } from "@/lib/supabase/records";
 import { VoteControls } from "./vote-controls";
+import { Badge } from "@/components/ui/badge";
 
 type AutomationCardProps = {
   automation: AutomationRecord & {
@@ -63,6 +64,16 @@ export function AutomationCard({ automation }: AutomationCardProps) {
               {automation.summary}
             </p>
           ) : null}
+          {automation.tags?.length ? (
+            <div className="flex flex-wrap gap-2">
+              {automation.tags.map((tag) => (
+                 <Badge key={tag} variant="secondary" className="text-xs uppercase">
+                {"#" + tag}
+              </Badge>
+              ))}
+            </div>
+          ) : null}
+          
         </CardHeader>
       </Link>
       <CardFooter className="mt-auto flex items-center justify-between gap-4 border-t border-border/60 bg-muted/40 pb-6">
