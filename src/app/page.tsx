@@ -27,7 +27,8 @@ export default async function Home() {
     );
   }
 
-  const [trending, latest] = await Promise.all([
+  const [top, trending, latest] = await Promise.all([
+    getAutomations({ limit: 4, orderBy: "top" }),
     getTrendingAutomations(4),
     getAutomations({ limit: 6, orderBy: "new" }),
   ]);
@@ -35,6 +36,29 @@ export default async function Home() {
   return (
     <div className="space-y-16">
       <HeroSection />
+
+      <section className="space-y-6">
+        <div className="flex items-center justify-between">
+          <div>
+            <h2 className="text-xl font-semibold">Top automations</h2>
+            <p className="text-sm text-muted-foreground">
+              Community favorites ranked by total votes.
+            </p>
+          </div>
+          <Button asChild variant="outline">
+            <Link href="/automations?sort=top">See leaderboard</Link>
+          </Button>
+        </div>
+        {top.length ? (
+          <div className="grid gap-6 md:grid-cols-2">
+            {top.map((automation) => (
+              <AutomationCard key={automation.id} automation={automation} />
+            ))}
+          </div>
+        ) : (
+          <EmptyState message="No automations ranked yet. Share your go-to workflow to get things started!" />
+        )}
+      </section>
 
       <section className="space-y-6">
         <div className="flex items-center justify-between">
