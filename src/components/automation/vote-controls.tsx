@@ -26,7 +26,7 @@ export function VoteControls({
   const router = useRouter();
   const pathname = usePathname();
   const searchParams = useSearchParams();
-  const { session } = useSupabase();
+  const { user } = useSupabase();
   const [optimisticVote, setOptimisticVote] = useOptimistic<VoteState, 1 | -1>(
     {
       total: voteTotal,
@@ -44,7 +44,7 @@ export function VoteControls({
   const [isPending, startTransition] = useTransition();
 
   const handleVote = (value: 1 | -1) => {
-    if (!session) {
+    if (!user) {
       const searchString = searchParams.toString();
       const redirectTarget = searchString ? `${pathname}?${searchString}` : pathname;
       router.push(`/auth/sign-in?redirectTo=${encodeURIComponent(redirectTarget)}`);

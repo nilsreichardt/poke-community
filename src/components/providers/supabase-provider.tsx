@@ -1,13 +1,13 @@
 "use client";
 
 import { createContext, useContext, useEffect, useState } from "react";
-import type { Session, SupabaseClient } from "@supabase/supabase-js";
+import type { SupabaseClient, User } from "@supabase/supabase-js";
 import { createSupabaseBrowserClient } from "@/lib/supabase/client";
 import type { Database } from "@/lib/supabase/types";
 
 type SupabaseContextValue = {
   supabase: SupabaseClient<Database>;
-  session: Session | null;
+  user: User | null;
 };
 
 const SupabaseContext = createContext<SupabaseContextValue | undefined>(
@@ -16,29 +16,48 @@ const SupabaseContext = createContext<SupabaseContextValue | undefined>(
 
 type ProviderProps = {
   children: React.ReactNode;
-  initialSession: Session | null;
+  initialUser: User | null;
 };
 
-export function SupabaseProvider({ children, initialSession }: ProviderProps) {
+export function SupabaseProvider({ children, initialUser }: ProviderProps) {
   const [supabase] = useState(() => createSupabaseBrowserClient());
-  const [session, setSession] = useState<Session | null>(initialSession);
+  const [user, setUser] = useState<User | null>(initialUser);
 
   useEffect(() => {
-    setSession(initialSession);
-  }, [initialSession]);
+    setUser(initialUser);
+  }, [initialUser]);
 
   useEffect(() => {
+    let isActive = true;
+
+    const syncUser = async () => {
+      const { data, error } = await supabase.auth.getUser();
+      if (!isActive) {
+        return;
+      }
+      if (error) {
+        setUser(null);
+        return;
+      }
+      setUser(data.user ?? null);
+    };
+
+    void syncUser();
+
     const {
       data: { subscription },
-    } = supabase.auth.onAuthStateChange((_event, newSession) => {
-      setSession(newSession);
+    } = supabase.auth.onAuthStateChange(() => {
+      void syncUser();
     });
 
-    return () => subscription.unsubscribe();
+    return () => {
+      isActive = false;
+      subscription.unsubscribe();
+    };
   }, [supabase]);
 
   return (
-    <SupabaseContext.Provider value={{ supabase, session }}>
+    <SupabaseContext.Provider value={{ supabase, user }}>
       {children}
     </SupabaseContext.Provider>
   );

@@ -20,7 +20,7 @@ const isProduction = process.env.NODE_ENV === "production";
 export function SiteHeader() {
   const pathname = usePathname();
   const searchParams = useSearchParams();
-  const { session } = useSupabase();
+  const { user } = useSupabase();
   const redirectTarget = buildRedirectTarget(pathname, searchParams);
 
   if (isProduction) {
@@ -52,7 +52,7 @@ export function SiteHeader() {
           })}
         </nav>
         <div className="flex items-center gap-3">
-          {session ? (
+          {user ? (
             <UserMenu redirectTo={redirectTarget} />
           ) : (
             <Button asChild variant="outline">
@@ -74,11 +74,11 @@ type UserMenuProps = {
 };
 
 function UserMenu({ redirectTo }: UserMenuProps) {
-  const { session } = useSupabase();
+  const { user } = useSupabase();
   const pathname = usePathname();
   const searchParams = useSearchParams();
   const dropdownRedirect = redirectTo || buildRedirectTarget(pathname, searchParams);
-  const email = session?.user.email ?? "";
+  const email = user?.email ?? "";
   const fallback = email ? email.slice(0, 2).toUpperCase() : "PC";
 
   return (
