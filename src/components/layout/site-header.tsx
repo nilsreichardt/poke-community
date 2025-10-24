@@ -11,9 +11,8 @@ import { useFormStatus } from "react-dom";
 
 const navigation = [
   { href: "/", label: "Home" },
-  { href: "/automations", label: "Automations" },
-  { href: "/submit", label: "Share automation" },
-  { href: "/dashboard", label: "Dashboard" },
+  { href: "/automations", label: "Discover" },
+  { href: "/submit", label: "Share" },
 ];
 
 const isProduction = process.env.NODE_ENV === "production";
