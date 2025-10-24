@@ -124,59 +124,67 @@ export default async function AutomationPage({ params }: AutomationPageProps) {
         automation={automation}
         canonicalUrl={canonicalUrl}
       />
-      <header className="flex flex-col gap-6 rounded-2xl border border-border bg-card/70 p-8 shadow-sm sm:flex-row sm:items-start sm:justify-between">
-        <div className="space-y-4">
-          <div className="flex flex-wrap items-center gap-3">
-            <span className="text-xs uppercase tracking-wide text-muted-foreground">
-              Shared {createdLabel}
-            </span>
-          </div>
-          <div className="space-y-2">
-            <h1 className="text-3xl font-semibold tracking-tight">
-              {automation.title}
-            </h1>
-            {automation.summary ? (
-              <p className="text-base text-muted-foreground">
-                {automation.summary}
-              </p>
+      <section className="space-y-8 rounded-2xl border border-border bg-card/70 p-8 shadow-sm">
+        <div className="flex flex-col gap-6 sm:flex-row sm:items-start sm:justify-between">
+          <div className="space-y-4">
+            <div className="flex flex-wrap items-center gap-3">
+              <span className="text-xs uppercase tracking-wide text-muted-foreground">
+                Shared {createdLabel}
+              </span>
+            </div>
+            <div className="space-y-2">
+              <h1 className="text-3xl font-semibold tracking-tight">
+                {automation.title}
+              </h1>
+              {automation.summary ? (
+                <p className="text-base text-muted-foreground">
+                  {automation.summary}
+                </p>
+              ) : null}
+            </div>
+            <div className="flex flex-wrap items-center gap-2 text-sm text-muted-foreground">
+              <span>Shared by {automation.profiles?.username ?? "Community member"}</span>
+              <span className="hidden h-1 w-1 rounded-full bg-muted-foreground/50 sm:inline-block" />
+              <span>{automation.vote_total} total votes</span>
+            </div>
+            {automation.tags?.length ? (
+              <div className="flex flex-wrap gap-2">
+                {automation.tags.map((tag: string) => (
+                  <Badge key={tag} variant="outline" className="text-xs uppercase">
+                    #{tag}
+                  </Badge>
+                ))}
+              </div>
             ) : null}
           </div>
-          <div className="flex flex-wrap items-center gap-2 text-sm text-muted-foreground">
-            <span>Shared by {automation.profiles?.username ?? "Community member"}</span>
-            <span className="hidden h-1 w-1 rounded-full bg-muted-foreground/50 sm:inline-block" />
-            <span>{automation.vote_total} total votes</span>
+          <div className="flex flex-col items-stretch gap-3">
+            <VoteControls
+              automationId={automation.id}
+              initialVote={automation.user_vote ?? 0}
+              voteTotal={automation.vote_total}
+            />
           </div>
-          {automation.tags?.length ? (
-            <div className="flex flex-wrap gap-2">
-              {automation.tags.map((tag: string) => (
-                <Badge key={tag} variant="outline" className="text-xs uppercase">
-                  #{tag}
-                </Badge>
-              ))}
+        </div>
+
+        {automation.description ? (
+          <div className="space-y-4 text-sm leading-relaxed text-foreground">
+            <h2 className="text-lg font-semibold">Automation overview</h2>
+            <div className="space-y-4">
+              <ReactMarkdown components={markdownComponents}>
+                {automation.description}
+              </ReactMarkdown>
             </div>
-          ) : null}
-        </div>
-        <div className="flex flex-col items-stretch gap-3 sm:w-56">
-          <VoteControls
-            automationId={automation.id}
-            initialVote={automation.user_vote ?? 0}
-            voteTotal={automation.vote_total}
-          />
-        </div>
-      </header>
-
-      <PromptBlock prompt={automation.prompt} />
-
-      {automation.description ? (
-        <section className="space-y-4 rounded-2xl border border-border bg-card/40 p-8 text-sm leading-relaxed text-foreground">
-          <h2 className="text-lg font-semibold">Automation overview</h2>
-          <div className="space-y-4">
-            <ReactMarkdown components={markdownComponents}>
-              {automation.description}
-            </ReactMarkdown>
           </div>
-        </section>
-      ) : null}
+        ) : null}
+
+        {automation.prompt ? (
+          <PromptBlock
+            prompt={automation.prompt}
+            variant="plain"
+            className="border-t border-border/60 pt-6"
+          />
+        ) : null}
+      </section>
     </article>
   );
 }

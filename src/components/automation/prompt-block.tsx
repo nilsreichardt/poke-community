@@ -3,12 +3,19 @@
 import { useState } from "react";
 import { Copy } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { cn } from "@/lib/utils";
 
 type PromptBlockProps = {
   prompt: string;
+  variant?: "card" | "plain";
+  className?: string;
 };
 
-export function PromptBlock({ prompt }: PromptBlockProps) {
+export function PromptBlock({
+  prompt,
+  variant = "card",
+  className,
+}: PromptBlockProps) {
   const [copied, setCopied] = useState(false);
 
   async function handleCopy() {
@@ -21,8 +28,13 @@ export function PromptBlock({ prompt }: PromptBlockProps) {
     }
   }
 
+  const containerClasses =
+    variant === "plain"
+      ? "space-y-3"
+      : "space-y-3 rounded-2xl border border-border bg-card/60 p-6";
+
   return (
-    <div className="space-y-3 rounded-2xl border border-border bg-card/60 p-6">
+    <div className={cn(containerClasses, className)}>
       <div className="flex items-center justify-between gap-3">
         <h2 className="text-lg font-semibold">Prompt</h2>
         <Button
