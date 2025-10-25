@@ -57,11 +57,11 @@ function SignInPrompt() {
     <div className="mx-auto flex w-full max-w-lg flex-col gap-4 rounded-xl border border-border bg-card p-8 text-center">
       <h1 className="text-2xl font-semibold">Join the community</h1>
       <p className="text-sm text-muted-foreground">
-        You need to be signed in to publish an automation. We&apos;ll email you a one-click sign-in link.
+        You need to be signed in to publish an automation.
       </p>
       <Button asChild>
         <Link href={`/auth/sign-in?redirectTo=${encodeURIComponent(redirectTo)}`}>
-          Sign in with email
+          Sign in or register
         </Link>
       </Button>
     </div>

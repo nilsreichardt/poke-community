@@ -38,7 +38,7 @@ export function SubscriptionSwitch({
         <span className="text-sm font-medium leading-none">{label}</span>
         <p className="text-xs text-muted-foreground">{description}</p>
       </div>
-      <Switch checked={checked} onCheckedChange={handleToggle} disabled={isPending} />
+      <Switch checked={checked} onCheckedChange={handleToggle} disabled={isPending} className="cursor-pointer" />
     </label>
   );
 }

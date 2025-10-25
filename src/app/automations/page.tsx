@@ -3,8 +3,10 @@ import Link from "next/link";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { AutomationCard } from "@/components/automation/automation-card";
-import { getAutomations } from "@/lib/data/automations";
+import { getAutomations, getCurrentUser, getSubscriptionPreferences } from "@/lib/data/automations";
 import { absoluteUrl, siteMetadata } from "@/lib/seo";
+import { CompactNotificationSubscription } from "@/components/automations/notification-subscription";
+import { AutoEnableSubscription } from "@/components/automations/auto-enable-subscription";
 
 const pageTitle = "Community automations";
 const pageDescription =
@@ -43,6 +45,9 @@ export default async function AutomationsPage({
   const q = rawQuery?.trim() ?? "";
   const sortParam = normalizeParam(params.sort) === "top" ? "top" : "new";
 
+  const user = await getCurrentUser();
+  const preferences = user ? (await getSubscriptionPreferences()) ?? new Map() : new Map();
+
   const automations = await getAutomations({
     search: q || undefined,
     orderBy: sortParam === "top" ? "top" : "new",
@@ -50,22 +55,32 @@ export default async function AutomationsPage({
 
   return (
     <div className="space-y-10">
-      <header className="space-y-4">
-        <h1 className="text-3xl font-semibold tracking-tight">Community automations</h1>
-        <p className="max-w-2xl text-sm text-muted-foreground">
-          Browse every automation submitted by the poke community. Use the search to filter by topic or vote count, and
-          click any card to view the full breakdown.
-        </p>
-        <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+      <AutoEnableSubscription isSignedIn={!!user} />
+      <header className="grid gap-6 lg:grid-cols-[1fr_auto]">
+        <div className="space-y-4">
+          <div>
+            <h1 className="text-3xl font-semibold tracking-tight">Community automations</h1>
+            <p className="mt-2 max-w-2xl text-sm text-muted-foreground">
+              Browse every automation submitted by the poke community. Use the search to filter by topic or vote count, and
+              click any card to view the full breakdown.
+            </p>
+          </div>
           <SearchForm defaultQuery={q} sort={sortParam} />
-          <Button asChild>
-            <Link href="/submit">Share your automation</Link>
-          </Button>
+        </div>
+
+        <div className="flex flex-col gap-4 lg:items-end mt-3.5">
+          <CompactNotificationSubscription isSignedIn={!!user} preferences={preferences} />
+          <div className="flex flex-wrap gap-3">
+            <SortToggle current={sortParam} query={q} />
+            <Button asChild>
+              <Link href="/submit">Share your automation</Link>
+            </Button>
+          </div>
         </div>
       </header>
 
       {automations.length ? (
-        <div className="grid gap-6 md:grid-cols-2">
+        <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
           {automations.map((automation) => (
             <AutomationCard key={automation.id} automation={automation} />
           ))}
@@ -73,7 +88,7 @@ export default async function AutomationsPage({
       ) : (
         <div className="rounded-lg border border-dashed border-border/70 bg-muted/30 p-8 text-sm text-muted-foreground">
           {q
-            ? `No automations match “${q}”. Try a different search term.`
+            ? `No automations match "${q}". Try a different search term.`
             : "No automations submitted yet. Be the first to add one!"}
         </div>
       )}
@@ -100,7 +115,6 @@ function SearchForm({
       <Button type="submit" variant="outline">
         Search
       </Button>
-      <SortToggle current={sort} query={defaultQuery} />
     </form>
   );
 }
