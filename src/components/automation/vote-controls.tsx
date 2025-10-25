@@ -51,9 +51,8 @@ export function VoteControls({
       return;
     }
 
-    setOptimisticVote(value);
-
     startTransition(async () => {
+      setOptimisticVote(value);
       try {
         await toggleVoteAction(automationId, value);
       } catch (error) {

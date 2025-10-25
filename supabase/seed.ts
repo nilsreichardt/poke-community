@@ -274,14 +274,6 @@ async function main() {
     throw new Error(`Failed to seed profiles: ${profilesError.message}`);
   }
 
-  const voteTotals = new Map<string, number>();
-  for (const vote of VOTES) {
-    voteTotals.set(
-      vote.automationId,
-      (voteTotals.get(vote.automationId) ?? 0) + vote.value,
-    );
-  }
-
   const { error: automationsError } = await supabase.from("automations").upsert(
     AUTOMATIONS.map(
       ({
@@ -304,7 +296,6 @@ async function main() {
         slug,
         tags,
         user_id: userId,
-        vote_total: voteTotals.get(id) ?? 0,
         created_at: daysAgo(createdDaysAgo, now).toISOString(),
         updated_at: daysAgo(updatedDaysAgo, now).toISOString(),
       }),

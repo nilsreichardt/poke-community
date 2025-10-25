@@ -1,13 +1,17 @@
+-- Extensions
 create extension if not exists "uuid-ossp";
+create extension if not exists pgcrypto schema extensions;
+create extension if not exists citext schema extensions;
 create extension if not exists moddatetime schema extensions;
 
+-- Tables
 create table if not exists public.profiles (
   id uuid primary key references auth.users (id) on delete cascade,
   created_at timestamptz default timezone('utc', now()),
   name text,
   avatar_url text,
   bio text,
-  email text,
+  email citext,
   unique(email)
 );
 
@@ -22,12 +26,9 @@ create table if not exists public.automations (
   slug text not null unique,
   tags text[],
   user_id uuid not null references public.profiles (id) on delete cascade,
-  vote_total integer not null default 0
+  constraint slug_format check (slug ~ '^[a-z0-9-]+$'),
+  constraint tags_len check (coalesce(array_length(tags, 1), 0) <= 20)
 );
-
-create trigger set_automations_updated_at
-  before update on public.automations
-  for each row execute procedure moddatetime (updated_at);
 
 create table if not exists public.votes (
   id uuid primary key default gen_random_uuid(),
@@ -47,6 +48,16 @@ create table if not exists public.subscriptions (
   unique (user_id, type)
 );
 
+-- Triggers
+create trigger set_automations_updated_at
+  before update on public.automations
+  for each row execute procedure extensions.moddatetime(updated_at);
+
+-- Views
+create or replace view public.public_profiles as
+select id, created_at, name, avatar_url, bio
+from public.profiles;
+
 create or replace view public.automations_with_scores as
 select
   a.id,
@@ -58,34 +69,81 @@ select
   a.tags,
   a.created_at,
   a.updated_at,
-  a.vote_total,
-  coalesce(sum(case when v.created_at >= timezone('utc', now()) - interval '7 days' then v.value end), 0) as recent_votes
+  a.user_id,
+  coalesce(sum(v.value), 0) as vote_total,
+  coalesce(sum(case when v.created_at >= timezone('utc', now()) - interval '7 days'
+                    then v.value end), 0) as recent_votes
 from public.automations a
 left join public.votes v on v.automation_id = a.id
 group by a.id;
 
+-- Indexes
+create index if not exists votes_automation_created_idx
+  on public.votes (automation_id, created_at);
+
+create index if not exists automations_tags_gin
+  on public.automations using gin (tags);
+
+create unique index if not exists automations_slug_lower_uk
+  on public.automations (lower(slug));
+
+-- Row Level Security
 alter table public.profiles enable row level security;
 alter table public.automations enable row level security;
 alter table public.votes enable row level security;
 alter table public.subscriptions enable row level security;
 
-create policy "Profiles are viewable by everyone" on public.profiles
-  for select using (true);
+-- Profile policies
+-- NOTE: Profiles are publicly readable to enable joins from automations.
+-- Email is technically accessible but frontend code doesn't expose it.
+-- For higher security requirements, consider a separate public_profile table.
+create policy "Profiles are viewable by everyone"
+  on public.profiles for select
+  using (true);
 
-create policy "Users can upsert their profile" on public.profiles
-  for all using (auth.uid() = id);
+create policy "Users can insert their profile"
+  on public.profiles for insert
+  with check (auth.uid() = id);
 
-create policy "Automations are public" on public.automations
-  for select using (true);
+create policy "Users can update their profile"
+  on public.profiles for update
+  using (auth.uid() = id)
+  with check (auth.uid() = id);
 
-create policy "Users can manage their automations" on public.automations
-  using (auth.uid() = user_id) with check (auth.uid() = user_id);
+-- Automation policies
+create policy "Automations are public"
+  on public.automations for select
+  using (true);
 
-create policy "Votes are visible" on public.votes
-  for select using (true);
+create policy "Users can insert automations"
+  on public.automations for insert
+  with check (auth.uid() = user_id);
 
-create policy "Signed-in users can vote" on public.votes
-  using (auth.uid() = user_id) with check (auth.uid() = user_id);
+create policy "Users can update their automations"
+  on public.automations for update
+  using (auth.uid() = user_id)
+  with check (auth.uid() = user_id);
 
-create policy "Signed-in users manage their subscriptions" on public.subscriptions
-  using (auth.uid() = user_id) with check (auth.uid() = user_id);
+create policy "Users can delete their automations"
+  on public.automations for delete
+  using (auth.uid() = user_id);
+
+-- Vote policies
+create policy "Votes are visible"
+  on public.votes for select
+  using (true);
+
+create policy "Signed-in users can vote"
+  on public.votes
+  using (auth.uid() = user_id)
+  with check (auth.uid() = user_id);
+
+-- Subscription policies
+create policy "Signed-in users manage their subscriptions"
+  on public.subscriptions
+  using (auth.uid() = user_id)
+  with check (auth.uid() = user_id);
+
+-- Grants
+grant select on public.public_profiles to anon, authenticated;
+grant select on public.automations_with_scores to anon, authenticated;

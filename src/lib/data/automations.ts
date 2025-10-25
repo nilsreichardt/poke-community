@@ -61,6 +61,78 @@ export async function getAutomations(
 
   const supabase = await createSupabaseServerClient();
 
+  // For "top" ordering, we need to use the view to sort by vote_total
+  if (options.orderBy === "top") {
+    // First get IDs sorted by vote_total from the view
+    let viewQuery = supabase
+      .from("automations_with_scores")
+      .select("id, vote_total");
+
+    if (options.search) {
+      const likeValue = `%${options.search}%`;
+      viewQuery = viewQuery.or(
+        `title.ilike.${likeValue},description.ilike.${likeValue},summary.ilike.${likeValue}`
+      );
+    }
+
+    viewQuery = viewQuery.order("vote_total", { ascending: false });
+
+    if (options.limit) {
+      viewQuery = viewQuery.limit(options.limit);
+    }
+
+    const { data: rankedData, error: viewError } = await viewQuery;
+
+    if (viewError) {
+      throw new Error(`Unable to load automations: ${viewError.message}`);
+    }
+
+    if (!rankedData?.length) {
+      return [];
+    }
+
+    const ids = rankedData.map((item) => item.id);
+    const nonNullIds = ids.filter((id): id is string => id !== null);
+
+    // Then fetch full automation data
+    const { data, error } = await supabase
+      .from("automations")
+      .select(
+        "*, profiles(id, name, avatar_url), votes(value, automation_id, user_id)"
+      )
+      .in("id", nonNullIds)
+      .returns<AutomationRowWithRelations[]>();
+
+    if (error) {
+      throw new Error(`Unable to load automations: ${error.message}`);
+    }
+
+    const rows = data ?? [];
+    const automationMap = new Map(rows.map((row) => [row.id, row]));
+
+    // Return in the order from the view
+    return nonNullIds
+      .map((id) => automationMap.get(id))
+      .filter((item): item is AutomationRowWithRelations => Boolean(item))
+      .map<AutomationWithRelations>((item) => {
+        const votes = Array.isArray(item.votes)
+          ? (item.votes as VoteRecord[])
+          : [];
+        const userVote =
+          votes.find((vote) => vote.user_id === user?.id)?.value ?? 0;
+        const voteTotal = votes.reduce((sum, vote) => sum + vote.value, 0);
+        const { votes: _unusedVotes, ...rest } = item;
+        void _unusedVotes;
+
+        return {
+          ...rest,
+          vote_total: voteTotal,
+          user_vote: userVote,
+        };
+      });
+  }
+
+  // For other orderings, query automations table directly
   let query = supabase
     .from("automations")
     .select(
@@ -78,11 +150,7 @@ export async function getAutomations(
     query = query.limit(options.limit);
   }
 
-  if (options.orderBy === "top") {
-    query = query.order("vote_total", { ascending: false });
-  } else {
-    query = query.order("created_at", { ascending: false });
-  }
+  query = query.order("created_at", { ascending: false });
 
   const { data, error } =
     await query.returns<AutomationRowWithRelations[]>();
@@ -99,11 +167,13 @@ export async function getAutomations(
       : [];
     const userVote =
       votes.find((vote) => vote.user_id === user?.id)?.value ?? 0;
+    const voteTotal = votes.reduce((sum, vote) => sum + vote.value, 0);
     const { votes: _unusedVotes, ...rest } = item;
     void _unusedVotes;
 
     return {
       ...rest,
+      vote_total: voteTotal,
       user_vote: userVote,
     };
   });
@@ -143,11 +213,13 @@ export async function getAutomationsForCurrentUser(): Promise<
       : [];
     const userVote =
       votes.find((vote) => vote.user_id === user.id)?.value ?? 0;
+    const voteTotal = votes.reduce((sum, vote) => sum + vote.value, 0);
     const { votes: _unusedVotes, ...rest } = item;
     void _unusedVotes;
 
     return {
       ...rest,
+      vote_total: voteTotal,
       user_vote: userVote,
     };
   });
@@ -216,11 +288,13 @@ export async function getAutomationBySlug(
     : [];
   const userVote =
     votes.find((vote) => vote.user_id === user?.id)?.value ?? 0;
+  const voteTotal = votes.reduce((sum, vote) => sum + vote.value, 0);
   const { votes: _unusedVotes, ...rest } = automation;
   void _unusedVotes;
 
   return {
     ...rest,
+    vote_total: voteTotal,
     user_vote: userVote,
   };
 }
@@ -297,11 +371,13 @@ export async function getTrendingAutomations(limit = 6) {
         : [];
       const userVote =
         votes.find((vote) => vote.user_id === user?.id)?.value ?? 0;
+      const voteTotal = votes.reduce((sum, vote) => sum + vote.value, 0);
       const { votes: _unusedVotes, ...rest } = item;
       void _unusedVotes;
 
       return {
         ...rest,
+        vote_total: voteTotal,
         recent_votes: rankingsMap.get(item.id) ?? 0,
         user_vote: userVote,
       };

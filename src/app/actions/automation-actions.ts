@@ -10,7 +10,6 @@ import {
 } from "@/lib/supabase/server";
 import type { SubscriptionType } from "@/lib/supabase/records";
 import type { TablesInsert } from "@/lib/supabase/types";
-import { getCurrentUser } from "@/lib/data/automations";
 import { sendAutomationAnnouncement } from "@/lib/email/subscriptions";
 import { upsertProfileFromSession } from "@/lib/profiles";
 import { slugify } from "@/lib/slug";
@@ -143,9 +142,14 @@ export async function updateProfileNameAction(
   _prevState: UpdateNameFormState,
   formData: FormData,
 ): Promise<UpdateNameFormState> {
-  const user = await getCurrentUser();
+  const supabase = await createSupabaseServerClient("mutate");
 
-  if (!user) {
+  const {
+    data: { user },
+    error: authError,
+  } = await supabase.auth.getUser();
+
+  if (authError || !user) {
     return {
       status: "error",
       message: "You need to be signed in to update your name.",
@@ -167,8 +171,6 @@ export async function updateProfileNameAction(
 
   const normalized = parseResult.data.name;
   const nextName = normalized.length === 0 ? null : normalized;
-
-  const supabase = await createSupabaseServerClient("mutate");
   const { error } = await supabase
     .from("profiles")
     .update({ name: nextName })
@@ -196,14 +198,18 @@ export async function updateProfileNameAction(
 }
 
 export async function deleteAccountAction() {
-  const user = await getCurrentUser();
+  const supabase = await createSupabaseServerClient("mutate");
 
-  if (!user) {
+  const {
+    data: { user },
+    error: authError,
+  } = await supabase.auth.getUser();
+
+  if (authError || !user) {
     redirect("/auth/sign-in?next=/settings");
   }
 
   const serviceClient = createSupabaseServiceRoleClient();
-  const supabase = await createSupabaseServerClient("mutate");
 
   const { data: automationRows, error: automationQueryError } =
     await serviceClient.from("automations").select("id").eq("user_id", user.id);
@@ -317,9 +323,14 @@ export async function createAutomationAction(
 
   const normalized = validation.data;
 
-  const user = await getCurrentUser();
+  const supabase = await createSupabaseServerClient("mutate");
 
-  if (!user) {
+  const {
+    data: { user },
+    error: authError,
+  } = await supabase.auth.getUser();
+
+  if (authError || !user) {
     return {
       status: "error",
       message: "You need to sign in before sharing an automation.",
@@ -336,8 +347,6 @@ export async function createAutomationAction(
         .map((tag) => tag.trim())
         .filter(Boolean)
     : null;
-
-  const supabase = await createSupabaseServerClient("mutate");
   const slug = await generateUniqueSlug(normalized.title);
 
   const automationValues: TablesInsert<"automations"> = {
@@ -408,9 +417,15 @@ export async function updateAutomationAction(
   }
 
   const normalized = validation.data;
-  const user = await getCurrentUser();
 
-  if (!user) {
+  const supabase = await createSupabaseServerClient("mutate");
+
+  const {
+    data: { user },
+    error: authError,
+  } = await supabase.auth.getUser();
+
+  if (authError || !user) {
     return {
       status: "error",
       message: "You need to sign in before updating an automation.",
@@ -427,8 +442,6 @@ export async function updateAutomationAction(
         .map((tag) => tag.trim())
         .filter(Boolean)
     : null;
-
-  const supabase = await createSupabaseServerClient("mutate");
 
   const { data: existing, error: fetchError } = await supabase
     .from("automations")
@@ -496,13 +509,16 @@ export async function updateAutomationAction(
 }
 
 export async function toggleVoteAction(automationId: string, value: 1 | -1) {
-  const user = await getCurrentUser();
+  const supabase = await createSupabaseServerClient("mutate");
 
-  if (!user) {
+  const {
+    data: { user },
+    error: authError,
+  } = await supabase.auth.getUser();
+
+  if (authError || !user) {
     throw new Error("You need to be signed in to vote.");
   }
-
-  const supabase = await createSupabaseServerClient("mutate");
 
   const existingVoteRes = await supabase
     .from("votes")
@@ -527,7 +543,6 @@ export async function toggleVoteAction(automationId: string, value: 1 | -1) {
       throw new Error(`Unable to remove vote: ${deleteError.message}`);
     }
 
-    await refreshVoteTotals(automationId);
     revalidatePath("/");
     revalidatePath("/automations");
     return;
@@ -554,8 +569,6 @@ export async function toggleVoteAction(automationId: string, value: 1 | -1) {
     }
   }
 
-  await refreshVoteTotals(automationId);
-
   revalidatePath("/");
   revalidatePath("/automations");
 }
@@ -567,13 +580,16 @@ export async function deleteAutomationAction(formData: FormData) {
     throw new Error("Missing automation identifier.");
   }
 
-  const user = await getCurrentUser();
+  const supabase = await createSupabaseServerClient("mutate");
 
-  if (!user) {
+  const {
+    data: { user },
+    error: authError,
+  } = await supabase.auth.getUser();
+
+  if (authError || !user) {
     throw new Error("You need to be signed in to manage automations.");
   }
-
-  const supabase = await createSupabaseServerClient("mutate");
 
   const { data: automation, error } = await supabase
     .from("automations")
@@ -610,15 +626,18 @@ export async function toggleSubscriptionAction(
   type: SubscriptionType,
   active: boolean,
 ) {
-  const user = await getCurrentUser();
+  const supabase = await createSupabaseServerClient("mutate");
 
-  if (!user) {
+  const {
+    data: { user },
+    error: authError,
+  } = await supabase.auth.getUser();
+
+  if (authError || !user) {
     throw new Error("You need to be signed in to manage subscriptions.");
   }
 
   await upsertProfileFromSession(user);
-
-  const supabase = await createSupabaseServerClient("mutate");
 
   const { data: existing, error } = await supabase
     .from("subscriptions")
@@ -689,29 +708,3 @@ async function generateUniqueSlug(title: string) {
   return `${slugBase}-${Date.now().toString(36)}`;
 }
 
-async function refreshVoteTotals(automationId: string) {
-  const supabase = createSupabaseServiceRoleClient();
-
-  const { data, error } = await supabase
-    .from("votes")
-    .select("value")
-    .eq("automation_id", automationId);
-
-  if (error) {
-    throw new Error(`Unable to recalculate votes: ${error.message}`);
-  }
-
-  const voteRows = (data ?? []) as {
-    value: number;
-  }[];
-  const voteTotal = voteRows.reduce((sum, vote) => sum + vote.value, 0);
-
-  const { error: updateError } = await supabase
-    .from("automations")
-    .update({ vote_total: voteTotal })
-    .eq("id", automationId);
-
-  if (updateError) {
-    throw new Error(`Unable to update vote total: ${updateError.message}`);
-  }
-}
