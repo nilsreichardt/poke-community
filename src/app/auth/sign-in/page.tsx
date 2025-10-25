@@ -21,7 +21,7 @@ export default async function SignInPage({ searchParams }: SignInPageProps) {
       <div>
         <h1 className="text-2xl font-semibold">Sign in to poke.community</h1>
         <p className="mt-2 text-sm text-muted-foreground">
-          Continue with Google or your email credentials to manage automations,
+          Continue with Google to manage automations,
           vote on ideas, and stay in sync with the community.
         </p>
       </div>

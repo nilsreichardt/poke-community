@@ -18,6 +18,8 @@ type SignInFormProps = {
   googleErrorMessage?: string | null;
 };
 
+const isProduction = process.env.NODE_ENV === "production";
+
 export function SignInForm({
   redirectTo,
   googleErrorMessage,
@@ -28,9 +30,9 @@ export function SignInForm({
   );
   const googleInitialState = googleErrorMessage
     ? {
-        status: "error" as const,
-        message: googleErrorMessage,
-      }
+      status: "error" as const,
+      message: googleErrorMessage,
+    }
     : googleSignInInitialState;
   const [googleState, googleFormAction] = useActionState(
     requestGoogleSignIn,
@@ -46,49 +48,50 @@ export function SignInForm({
       {googleState.status === "error" && googleState.message ? (
         <p className="text-sm text-destructive">{googleState.message}</p>
       ) : null}
-      <div className="flex items-center gap-3 text-xs uppercase tracking-wide text-muted-foreground">
-        <span className="h-px flex-1 bg-border" />
-        <span>Or continue with email</span>
-        <span className="h-px flex-1 bg-border" />
-      </div>
-      <form className="flex flex-col gap-4" action={passwordFormAction}>
-        <input type="hidden" name="redirectTo" value={redirectTo} />
-        <label className="flex flex-col gap-2 text-sm">
-          Email address
-          <Input
-            type="email"
-            name="email"
-            placeholder="you@example.com"
-            required
-            autoComplete="email"
-          />
-        </label>
-        <label className="flex flex-col gap-2 text-sm">
-          Password
-          <Input
-            type="password"
-            name="password"
-            placeholder="your password"
-            required
-            autoComplete="current-password"
-            minLength={4}
-          />
-        </label>
-        <PasswordSubmitButton />
-        {passwordState.message ? (
-          <p
-            className={`text-sm ${
-              passwordState.status === "success"
+      {isProduction ? null : (<div>
+        <div className="flex items-center gap-3 text-xs uppercase tracking-wide text-muted-foreground">
+          <span className="h-px flex-1 bg-border" />
+          <span>Or continue with email</span>
+          <span className="h-px flex-1 bg-border" />
+        </div>
+        <form className="flex flex-col gap-4 mt-4" action={passwordFormAction}>
+          <input type="hidden" name="redirectTo" value={redirectTo} />
+          <label className="flex flex-col gap-2 text-sm">
+            Email address
+            <Input
+              type="email"
+              name="email"
+              placeholder="you@example.com"
+              required
+              autoComplete="email"
+            />
+          </label>
+          <label className="flex flex-col gap-2 text-sm">
+            Password
+            <Input
+              type="password"
+              name="password"
+              placeholder="your password"
+              required
+              autoComplete="current-password"
+              minLength={4}
+            />
+          </label>
+          <PasswordSubmitButton />
+          {passwordState.message ? (
+            <p
+              className={`text-sm ${passwordState.status === "success"
                 ? "text-emerald-600"
                 : passwordState.status === "error"
                   ? "text-destructive"
                   : ""
-            }`}
-          >
-            {passwordState.message}
-          </p>
-        ) : null}
-      </form>
+                }`}
+            >
+              {passwordState.message}
+            </p>
+          ) : null}
+        </form>
+      </div>)}
     </div>
   );
 }
