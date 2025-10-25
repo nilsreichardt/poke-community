@@ -3,6 +3,7 @@
 import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { Switch } from "@/components/ui/switch";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { toggleSubscriptionAction } from "@/app/actions/automation-actions";
 
 type CompactSubscriptionSwitchProps = {
@@ -41,11 +42,22 @@ function CompactSubscriptionSwitch({
     });
   };
 
+  const tooltipMessage = type === "new"
+    ? "Get notifications about new automations"
+    : "Get notifications about trending automations";
+
   return (
-    <label className="flex items-center gap-2">
-      <span className="text-sm font-medium leading-none flex-1">{label}</span>
-      <Switch checked={checked} onCheckedChange={handleToggle} disabled={isPending} className="cursor-pointer" />
-    </label>
+    <Tooltip>
+      <TooltipTrigger asChild>
+        <label className="flex items-center gap-2 cursor-pointer">
+          <span className="text-sm font-medium leading-none flex-1">{label}</span>
+          <Switch checked={checked} onCheckedChange={handleToggle} disabled={isPending} className="cursor-pointer" />
+        </label>
+      </TooltipTrigger>
+      <TooltipContent>
+        <p>{tooltipMessage}</p>
+      </TooltipContent>
+    </Tooltip>
   );
 }
 
@@ -59,24 +71,26 @@ export function CompactNotificationSubscription({
   preferences,
 }: CompactNotificationSubscriptionProps) {
   return (
-    <div className="space-y-2">
-      <p className="text-xs text-muted-foreground">
-        Email notifications
-      </p>
-      <div className="space-y-2 items-end">
-        <CompactSubscriptionSwitch
-          type="new"
-          label="New"
-          defaultChecked={preferences.get("new") ?? false}
-          isSignedIn={isSignedIn}
-        />
-        <CompactSubscriptionSwitch
-          type="trending"
-          label="Trending"
-          defaultChecked={preferences.get("trending") ?? false}
-          isSignedIn={isSignedIn}
-        />
+    <TooltipProvider>
+      <div className="space-y-2">
+        <p className="text-xs text-muted-foreground">
+          Email notifications
+        </p>
+        <div className="space-y-2 items-end">
+          <CompactSubscriptionSwitch
+            type="new"
+            label="New"
+            defaultChecked={preferences.get("new") ?? false}
+            isSignedIn={isSignedIn}
+          />
+          <CompactSubscriptionSwitch
+            type="trending"
+            label="Trending"
+            defaultChecked={preferences.get("trending") ?? false}
+            isSignedIn={isSignedIn}
+          />
+        </div>
       </div>
-    </div>
+    </TooltipProvider>
   );
 }
