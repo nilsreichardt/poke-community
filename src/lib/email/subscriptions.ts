@@ -23,7 +23,8 @@ type SubscriptionRowWithProfile = {
 };
 
 export async function sendAutomationAnnouncement(
-  input: AutomationAnnouncementInput
+  input: AutomationAnnouncementInput,
+  creatorId: string,
 ) {
   if (!resendClient) {
     return;
@@ -36,6 +37,7 @@ export async function sendAutomationAnnouncement(
     .select("id, user_id, profiles!inner(email)")
     .eq("type", "new")
     .eq("active", true)
+    .neq("user_id", creatorId)
     .returns<SubscriptionRowWithProfile[]>();
 
   if (error) {

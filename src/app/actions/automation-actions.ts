@@ -370,10 +370,13 @@ export async function createAutomationAction(
     };
   }
 
-  await sendAutomationAnnouncement({
-    automationTitle: normalized.title,
-    automationSlug: slug,
-  });
+  await sendAutomationAnnouncement(
+    {
+      automationTitle: normalized.title,
+      automationSlug: slug,
+    },
+    user.id,
+  );
 
   revalidatePath("/");
   revalidatePath("/automations");
@@ -707,4 +710,3 @@ async function generateUniqueSlug(title: string) {
 
   return `${slugBase}-${Date.now().toString(36)}`;
 }
-
