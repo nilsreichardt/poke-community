@@ -17,7 +17,7 @@ const navigation = [
   { href: "/submit", label: "Share", icon: PlusCircleIcon },
 ];
 
-const isProduction = process.env.NODE_ENV === "production";
+// const isProduction = process.env.NODE_ENV === "production";
 
 export function SiteHeader() {
   const pathname = usePathname();
@@ -25,9 +25,9 @@ export function SiteHeader() {
   const { user } = useSupabase();
   const redirectTarget = buildRedirectTarget(pathname, searchParams);
 
-  if (isProduction) {
-    return null;
-  }
+  // if (isProduction) {
+  //   return null;
+  // }
 
   return (
     <header className="border-b border-border bg-background/80 backdrop-blur">
