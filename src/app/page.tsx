@@ -14,18 +14,18 @@ export const metadata: Metadata = {
   },
 };
 
-const isProduction = process.env.NODE_ENV === "production";
+// const isProduction = process.env.NODE_ENV === "production";
 
 export default async function Home() {
-  if (isProduction) {
-    return (
-      <main className="flex flex-col items-center justify-center min-h-[calc(100vh-5rem)]">
-        <div className="w-full">
-          <LandingHeroSection />
-        </div>
-      </main>
-    );
-  }
+  // if (isProduction) {
+  //   return (
+  //     <main className="flex flex-col items-center justify-center min-h-[calc(100vh-5rem)]">
+  //       <div className="w-full">
+  //         <LandingHeroSection />
+  //       </div>
+  //     </main>
+  //   );
+  // }
 
   const [top, trending, latest] = await Promise.all([
     getAutomations({ limit: 4, orderBy: "top" }),
