@@ -210,7 +210,7 @@ function buildTrendingHtml(listItems: string, unsubscribeUrl: string) {
     `<p>Vote for your favorites or submit your own automation on poke.community.</p>`,
     `<p>If you'd rather not receive trending updates you can <a href="${unsubscribeUrl}">unsubscribe here</a>.</p>`,
     `<hr />`,
-    `<small>poke.community is an independent project and not affiliated with poke.</small>`,
+    `<small>poke.community is an independent project and not affiliated with Poke.</small>`,
   ].join("");
 }
 
@@ -230,7 +230,7 @@ function buildTrendingText(
     ``,
     `To unsubscribe instantly, visit: ${unsubscribeUrl}`,
     ``,
-    `poke.community is an independent project and not affiliated with poke.`,
+    `poke.community is an independent project and not affiliated with Poke.`,
   ].join("\n");
 }
 

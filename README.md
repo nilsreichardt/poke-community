@@ -1,6 +1,6 @@
 <h1 align="center">poke.community</h1>
 
-Community hub for sharing and discovering automations built with [Poke](https://poke.com). Makers can publish their workflows, the community can vote and discuss, and subscribers get notified whenever something new or trending drops. This project is not affiliated with poke or Interaction Company.
+Community hub for sharing and discovering automations built with [Poke](https://poke.com). Makers can publish their workflows, the community can vote and discuss, and subscribers get notified whenever something new or trending drops. This project is not affiliated with [Poke](https://poke.com) or [The Interaction Company of California](https://interaction.co/about).
 
 ## Features
 
@@ -76,17 +76,6 @@ This repo ships with Supabase CLI configuration, migrations, and seeds so you ca
 
 5. Restart the Next.js dev server so it picks up the new environment variables.
 
-## Seed Data
-
-The CLI command `npm run supabase:reset` loads `supabase/seed.sql`, which creates:
-
-- Two demo users (`ava@poke.community` and `liam@poke.community`) with corresponding profiles
-- Three automations with descriptions, tags, and vote totals
-- Vote history for the past week so trending calculations have signal
-- Notification preferences for "new automation" and "trending" digests
-
-These records align with the mock data used by the test suite so what you see locally matches what the Playwright scenarios expect.
-
 ## Email (Resend)
 
 Add your Resend API key to `.env.local`. By default, emails are sent from `updates@poke.community`. Update the sender address in `src/lib/email/subscriptions.ts` if you plan to use a different verified domain. Two helper functions are available:
@@ -111,21 +100,6 @@ npx playwright install
 
 To execute everything in one shot use `npm run test`. Tests automatically set `NEXT_PUBLIC_DATA_MODE=mock`, so no Supabase instance is required for the suite.
 
-## Development Notes
-
-- Votes, submissions, and subscription toggles require authentication. Attempting an action while signed out redirects you to the email sign-in page.
-- Descriptions accept Markdown and are rendered with `react-markdown` on detail pages.
-- Trending automations are calculated from votes over the last 7 days using the `automations_with_scores` view.
-- The dashboard allows users to opt in or out of Resend-powered notifications at any time.
-
-## Roadmap Ideas
-
-- Add Google sign-in alongside email magic links
-- Surface comments or discussion threads per automation
-- Allow creators to edit or archive their automations directly from the UI
-- Integrate webhook-driven Resend digests (cron job) for trending automations
-- Add tagging filters and collections once real data arrives
-
 ---
 
-poke.community is a community-driven showcase and is not affiliated with poke or Interaction Company.
+poke.community is a community-driven showcase and is not affiliated with [Poke](https://poke.com) or [The Interaction Company of California](https://interaction.co/about).
