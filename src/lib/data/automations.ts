@@ -260,7 +260,7 @@ export async function getAutomationForEditing(
 
 export async function getAutomationBySlug(
   slug: string
-): Promise<AutomationWithRelations | null> {
+): Promise<(AutomationWithRelations & { user_id: string }) | null> {
   const user = await getCurrentUser();
 
   const supabase = await createSupabaseServerClient();

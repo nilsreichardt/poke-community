@@ -13,6 +13,7 @@ import { useFormStatus } from "react-dom";
 import { updateAutomationAction } from "@/app/actions/automation-actions";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { MarkdownEditor } from "@/components/forms/markdown-editor";
 import { Textarea } from "@/components/ui/textarea";
 import type { AutomationForEditing } from "@/lib/data/automations";
 import {
@@ -204,7 +205,7 @@ export function EditAutomationForm({ automation }: EditAutomationFormProps) {
         error={visibleErrors.description}
         hintThresholdText={limitHint(formValues.description, DESCRIPTION_LIMIT)}
       >
-        <Textarea
+        <MarkdownEditor
           name="description"
           rows={8}
           maxLength={DESCRIPTION_LIMIT}

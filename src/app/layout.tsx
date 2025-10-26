@@ -1,6 +1,7 @@
 import { Suspense } from "react";
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
+import Script from "next/script";
 import "./globals.css";
 import { SupabaseProvider } from "@/components/providers/supabase-provider";
 import { SiteHeader } from "@/components/layout/site-header";
@@ -66,6 +67,9 @@ export default async function RootLayout({
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
       >
+        <Script id="strip-grammarly-attrs" strategy="beforeInteractive">
+          {`(function(){if(typeof document==="undefined")return;var target=document.body;if(!target)return;["data-new-gr-c-s-check-loaded","data-gr-ext-installed"].forEach(function(attr){if(target.hasAttribute(attr)){target.removeAttribute(attr);}});}());`}
+        </Script>
         <SupabaseProvider key={user?.id ?? "anonymous"} initialUser={user}>
           <div className="flex min-h-screen flex-col bg-background text-foreground">
             <Suspense fallback={null}>

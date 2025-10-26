@@ -1,13 +1,19 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import ReactMarkdown from "react-markdown";
-import type { Components } from "react-markdown";
+import rehypeRaw from "rehype-raw";
+import rehypeSanitize from "rehype-sanitize";
+import remarkBreaks from "remark-breaks";
+import remarkGfm from "remark-gfm";
 import { format } from "date-fns";
 import { getAutomationBySlug, getCurrentUser } from "@/lib/data/automations";
 import { VoteControls } from "@/components/automation/vote-controls";
-import { Badge } from "@/components/ui/badge";
 import { PromptBlock } from "@/components/automation/prompt-block";
-import { cn } from "@/lib/utils";
+import { Badge } from "@/components/ui/badge";
+import {
+  automationMarkdownComponents,
+  markdownSanitizeSchema,
+} from "@/components/markdown/markdown-components";
 import { absoluteUrl, siteMetadata } from "@/lib/seo";
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
@@ -181,9 +187,13 @@ export default async function AutomationPage({ params }: AutomationPageProps) {
 
         {automation.description ? (
           <div className="space-y-4 text-sm leading-relaxed text-foreground">
-            <h2 className="text-lg font-semibold">Automation overview</h2>
+            <h2 className="text-lg font-semibold">Description</h2>
             <div className="space-y-4">
-              <ReactMarkdown components={markdownComponents}>
+              <ReactMarkdown
+                remarkPlugins={[remarkGfm, remarkBreaks]}
+                rehypePlugins={[rehypeRaw, [rehypeSanitize, markdownSanitizeSchema]]}
+                components={automationMarkdownComponents}
+              >
                 {automation.description}
               </ReactMarkdown>
             </div>
@@ -201,71 +211,6 @@ export default async function AutomationPage({ params }: AutomationPageProps) {
     </article>
   );
 }
-
-const markdownComponents: Components = {
-  p: ({ className, children, ...props }) => (
-    <p
-      {...props}
-      className={cn("leading-relaxed text-foreground/90", className)}
-    >
-      {children}
-    </p>
-  ),
-  a: ({ className, children, href, ...props }) => (
-    <a
-      {...props}
-      href={href}
-      target="_blank"
-      rel="noopener noreferrer"
-      className={cn(
-        "font-medium text-primary underline-offset-2 hover:underline",
-        className
-      )}
-    >
-      {children}
-    </a>
-  ),
-  code: ({ className, children, ...props }) => (
-    <code
-      {...props}
-      className={cn("rounded bg-muted px-1 py-0.5 text-xs", className)}
-    >
-      {children}
-    </code>
-  ),
-  ul: ({ className, children, ...props }) => (
-    <ul
-      {...props}
-      className={cn("ml-4 list-disc space-y-1", className)}
-    >
-      {children}
-    </ul>
-  ),
-  ol: ({ className, children, ...props }) => (
-    <ol
-      {...props}
-      className={cn("ml-4 list-decimal space-y-1", className)}
-    >
-      {children}
-    </ol>
-  ),
-  h2: ({ className, children, ...props }) => (
-    <h2
-      {...props}
-      className={cn("text-lg font-semibold text-foreground", className)}
-    >
-      {children}
-    </h2>
-  ),
-  h3: ({ className, children, ...props }) => (
-    <h3
-      {...props}
-      className={cn("text-base font-semibold text-foreground", className)}
-    >
-      {children}
-    </h3>
-  ),
-};
 
 type AutomationForJsonLd = NonNullable<
   Awaited<ReturnType<typeof getAutomationBySlug>>

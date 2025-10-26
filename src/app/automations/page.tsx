@@ -1,12 +1,13 @@
-import type { Metadata } from "next";
-import Link from "next/link";
-import { Input } from "@/components/ui/input";
-import { Button } from "@/components/ui/button";
 import { AutomationCard } from "@/components/automation/automation-card";
+import { AutoEnableSubscription } from "@/components/automations/auto-enable-subscription";
+import { CompactNotificationSubscription } from "@/components/automations/notification-subscription";
+import { Button } from "@/components/ui/button";
 import { getAutomations, getCurrentUser, getSubscriptionPreferences } from "@/lib/data/automations";
 import { absoluteUrl, siteMetadata } from "@/lib/seo";
-import { CompactNotificationSubscription } from "@/components/automations/notification-subscription";
-import { AutoEnableSubscription } from "@/components/automations/auto-enable-subscription";
+import { PlusIcon } from "lucide-react";
+import type { Metadata } from "next";
+import Link from "next/link";
+import { SearchForm } from "./search-form";
 
 const pageTitle = "Community automations";
 const pageDescription =
@@ -73,7 +74,10 @@ export default async function AutomationsPage({
           <div className="flex flex-wrap gap-3">
             <SortToggle current={sortParam} query={q} />
             <Button asChild>
-              <Link href="/submit">Share your automation</Link>
+              <Link href="/submit">
+                <PlusIcon className="-ml-0.5 h-4 w-4" />
+                Share your automation
+              </Link>
             </Button>
           </div>
         </div>
@@ -93,29 +97,6 @@ export default async function AutomationsPage({
         </div>
       )}
     </div>
-  );
-}
-
-function SearchForm({
-  defaultQuery,
-  sort,
-}: {
-  defaultQuery: string;
-  sort: "new" | "top";
-}) {
-  return (
-    <form className="flex w-full flex-col gap-3 sm:flex-row" action="/automations">
-      <Input
-        name="q"
-        placeholder="Search by title, summary, or tags"
-        defaultValue={defaultQuery}
-        className="flex-1"
-      />
-      <input type="hidden" name="sort" value={sort} />
-      <Button type="submit" variant="outline">
-        Search
-      </Button>
-    </form>
   );
 }
 

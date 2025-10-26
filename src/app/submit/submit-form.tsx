@@ -11,9 +11,10 @@ import { useFormStatus } from "react-dom";
 import { useRouter } from "next/navigation";
 import { createAutomationAction } from "@/app/actions/automation-actions";
 import { automationFormInitialState } from "@/app/actions/form-states";
+import { Button } from "@/components/ui/button";
+import { MarkdownEditor } from "@/components/forms/markdown-editor";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
-import { Button } from "@/components/ui/button";
 import {
   type AutomationFormValues,
   validateAutomationForm,
@@ -171,7 +172,7 @@ export function AutomationForm() {
         error={visibleErrors.description}
         hintThresholdText={limitHint(formValues.description, DESCRIPTION_LIMIT)}
       >
-        <Textarea
+        <MarkdownEditor
           name="description"
           rows={8}
           maxLength={DESCRIPTION_LIMIT}
