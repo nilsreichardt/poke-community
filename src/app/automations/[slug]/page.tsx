@@ -3,12 +3,15 @@ import { notFound } from "next/navigation";
 import ReactMarkdown from "react-markdown";
 import type { Components } from "react-markdown";
 import { format } from "date-fns";
-import { getAutomationBySlug } from "@/lib/data/automations";
+import { getAutomationBySlug, getCurrentUser } from "@/lib/data/automations";
 import { VoteControls } from "@/components/automation/vote-controls";
 import { Badge } from "@/components/ui/badge";
 import { PromptBlock } from "@/components/automation/prompt-block";
 import { cn } from "@/lib/utils";
 import { absoluteUrl, siteMetadata } from "@/lib/seo";
+import { Button } from "@/components/ui/button";
+import Link from "next/link";
+import { PencilIcon } from "lucide-react";
 
 type AutomationPageParams = {
   slug: string;
@@ -110,6 +113,9 @@ export default async function AutomationPage({ params }: AutomationPageProps) {
     notFound();
   }
 
+  const user = await getCurrentUser();
+  const isAuthor = user?.id === automation.user_id;
+
   const canonicalUrl = absoluteUrl(`/automations/${automation.slug}`);
   const authorName = automation.profiles?.name ?? null;
   const createdAt = automation.created_at
@@ -157,6 +163,14 @@ export default async function AutomationPage({ params }: AutomationPageProps) {
             ) : null}
           </div>
           <div className="flex flex-col items-stretch gap-3">
+            {isAuthor && (
+              <Button asChild size="sm" variant="outline">
+                <Link href={`/dashboard/${automation.id}/edit`}>
+                  <PencilIcon className="-ml-0.5 h-4 w-4" />
+                  Edit
+                </Link>
+              </Button>
+            )}
             <VoteControls
               automationId={automation.id}
               initialVote={automation.user_vote ?? 0}
