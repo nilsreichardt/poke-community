@@ -98,6 +98,7 @@ export function SearchForm({ defaultQuery, sort }: SearchFormProps) {
   );
 }
 
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 function useDebouncedCallback<T extends (...args: any[]) => void>(
   callback: T,
   delay: number,
