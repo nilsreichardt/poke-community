@@ -4,7 +4,7 @@ import { CompactNotificationSubscription } from "@/components/automations/notifi
 import { Button } from "@/components/ui/button";
 import { getAutomations, getCurrentUser, getSubscriptionPreferences } from "@/lib/data/automations";
 import { absoluteUrl, siteMetadata } from "@/lib/seo";
-import { PlusIcon } from "lucide-react";
+import { FilterIcon, PlusIcon } from "lucide-react";
 import type { Metadata } from "next";
 import Link from "next/link";
 import { SearchForm } from "./search-form";
@@ -57,7 +57,7 @@ export default async function AutomationsPage({
   return (
     <div className="space-y-10">
       <AutoEnableSubscription isSignedIn={!!user} />
-      <header className="grid gap-6 lg:grid-cols-[1fr_auto]">
+      <header className="grid gap-4 lg:grid-cols-[1fr_auto]">
         <div className="space-y-4">
           <div>
             <h1 className="text-3xl font-semibold tracking-tight">Community automations</h1>
@@ -118,7 +118,8 @@ function SortToggle({
 
   return (
     <Button asChild variant="secondary">
-      <Link href={href}>{label}</Link>
+      <Link href={href}>
+        <FilterIcon className="-ml-0.5 h-4 w-4" />{label}</Link>
     </Button>
   );
 }
