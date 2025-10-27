@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
+import { CloudOff } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { AutomationCard } from "@/components/automation/automation-card";
 import {
@@ -27,11 +28,21 @@ export default async function Home() {
   //   );
   // }
 
-  const [top, trending, latest] = await Promise.all([
-    getAutomations({ limit: 4, orderBy: "top" }),
-    getTrendingAutomations(4),
-    getAutomations({ limit: 6, orderBy: "new" }),
-  ]);
+  let top: Awaited<ReturnType<typeof getAutomations>> = [];
+  let trending: Awaited<ReturnType<typeof getTrendingAutomations>> = [];
+  let latest: Awaited<ReturnType<typeof getAutomations>> = [];
+
+  try {
+    [top, trending, latest] = await Promise.all([
+      getAutomations({ limit: 4, orderBy: "top" }),
+      getTrendingAutomations(4),
+      getAutomations({ limit: 6, orderBy: "new" }),
+    ]);
+  } catch (error) {
+    return (
+      <ServiceUnavailable message={getServiceOutageMessage(error)} />
+    );
+  }
 
   return (
     <div className="space-y-16">
@@ -183,4 +194,79 @@ function EmptyState({ message }: { message: string }) {
       {message}
     </div>
   );
+}
+
+function ServiceUnavailable({ message }: { message: string }) {
+  return (
+    <main className="flex min-h-[calc(100vh-5rem)] items-center justify-center px-4">
+      <div className="relative w-full max-w-xl overflow-hidden rounded-3xl border border-border/60 bg-background/80 p-10 shadow-2xl">
+        <div className="pointer-events-none absolute inset-0 bg-gradient-to-br from-primary/15 via-transparent to-secondary/30 opacity-80 blur-2xl" />
+        <div className="relative space-y-6 text-center">
+          <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-primary/10 text-primary">
+            <CloudOff className="h-8 w-8" aria-hidden="true" />
+          </div>
+          <div className="space-y-3">
+            <h1 className="text-2xl font-semibold">We can’t reach our automations right now</h1>
+            <p className="text-sm text-muted-foreground leading-relaxed">
+              {message}
+            </p>
+          </div>
+          <div className="space-y-3 text-sm text-muted-foreground">
+            <p>
+              We&apos;re working to restore the connection. You can try refreshing the page in a moment or send email to our support{" "}
+              <Link
+                href="mailto:hi@poke.community"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="font-medium text-primary hover:underline"
+              >
+                hi@poke.community
+              </Link>
+              .
+            </p>
+            <Button asChild variant="outline">
+              <Link href="/">Retry now</Link>
+            </Button>
+          </div>
+        </div>
+      </div>
+    </main>
+  );
+}
+
+function getServiceOutageMessage(error: unknown): string {
+  if (error instanceof Error && error.message) {
+    return refineOutageCopy(error.message);
+  }
+
+  if (typeof error === "string") {
+    return refineOutageCopy(error);
+  }
+
+  return "Our data service is temporarily unreachable. Please try again soon.";
+}
+
+function refineOutageCopy(rawMessage: string): string {
+  if (!rawMessage) {
+    return "Our data service is temporarily unreachable. Please try again soon.";
+  }
+
+  const networkCopy = rawMessage.match(
+    /(Our data service is temporarily unreachable[^.]*(?:\.)?)/
+  );
+  if (networkCopy?.[0]) {
+    return networkCopy[0].trim();
+  }
+
+  const colonIndex = rawMessage.indexOf(":");
+  if (colonIndex !== -1 && colonIndex + 1 < rawMessage.length) {
+    return rawMessage.slice(colonIndex + 1).trim();
+  }
+
+  const periodIndex = rawMessage.indexOf(".");
+  if (periodIndex !== -1 && periodIndex + 1 < rawMessage.length) {
+    return rawMessage.slice(periodIndex + 1).trim();
+  }
+
+  return rawMessage;
 }

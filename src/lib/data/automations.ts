@@ -40,6 +40,44 @@ type ListAutomationsOptions = {
   orderBy?: "new" | "top";
 };
 
+function extractErrorMessage(error: unknown): string {
+  if (typeof error === "string") {
+    return error;
+  }
+
+  if (
+    typeof error === "object" &&
+    error !== null &&
+    "message" in error &&
+    typeof (error as { message?: unknown }).message === "string"
+  ) {
+    return (error as { message?: string }).message ?? "";
+  }
+
+  return "";
+}
+
+function formatSupabaseError(baseMessage: string, error: unknown): string {
+  const message = extractErrorMessage(error);
+
+  if (message) {
+    const lower = message.toLowerCase();
+
+    if (
+      lower.includes("fetch failed") ||
+      lower.includes("failed to fetch") ||
+      lower.includes("network error") ||
+      lower.includes("econnrefused")
+    ) {
+      return `${baseMessage}. Our data service is temporarily unreachable. Please try again soon.`;
+    }
+
+    return `${baseMessage}: ${message}`;
+  }
+
+  return baseMessage;
+}
+
 export const getCurrentUser = cache(async () => {
   const supabase = await createSupabaseServerClient();
   const {
@@ -84,7 +122,9 @@ export async function getAutomations(
     const { data: rankedData, error: viewError } = await viewQuery;
 
     if (viewError) {
-      throw new Error(`Unable to load automations: ${viewError.message}`);
+      throw new Error(
+        formatSupabaseError("Unable to load automations", viewError)
+      );
     }
 
     if (!rankedData?.length) {
@@ -104,7 +144,9 @@ export async function getAutomations(
       .returns<AutomationRowWithRelations[]>();
 
     if (error) {
-      throw new Error(`Unable to load automations: ${error.message}`);
+      throw new Error(
+        formatSupabaseError("Unable to load automations", error)
+      );
     }
 
     const rows = data ?? [];
@@ -156,7 +198,9 @@ export async function getAutomations(
     await query.returns<AutomationRowWithRelations[]>();
 
   if (error) {
-    throw new Error(`Unable to load automations: ${error.message}`);
+    throw new Error(
+      formatSupabaseError("Unable to load automations", error)
+    );
   }
 
   const rows = data ?? [];
@@ -201,7 +245,7 @@ export async function getAutomationsForCurrentUser(): Promise<
 
   if (error) {
     throw new Error(
-      `Unable to load your automations: ${error.message}`
+      formatSupabaseError("Unable to load your automations", error)
     );
   }
 
@@ -245,7 +289,9 @@ export async function getAutomationForEditing(
     .maybeSingle();
 
   if (error) {
-    throw new Error(`Unable to load automation: ${error.message}`);
+    throw new Error(
+      formatSupabaseError("Unable to load automation", error)
+    );
   }
 
   if (!data || data.user_id !== user.id) {
@@ -274,7 +320,9 @@ export async function getAutomationBySlug(
     .maybeSingle();
 
   if (error) {
-    throw new Error(`Unable to load automation: ${error.message}`);
+    throw new Error(
+      formatSupabaseError("Unable to load automation", error)
+    );
   }
 
   const automation = data as AutomationRowWithRelations | null;
@@ -313,7 +361,10 @@ export async function getTrendingAutomations(limit = 6) {
 
   if (rankingError) {
     throw new Error(
-      `Unable to load trending automations: ${rankingError.message}`
+      formatSupabaseError(
+        "Unable to load trending automations",
+        rankingError
+      )
     );
   }
 
@@ -353,7 +404,10 @@ export async function getTrendingAutomations(limit = 6) {
 
   if (automationsError) {
     throw new Error(
-      `Unable to load trending automations: ${automationsError.message}`
+      formatSupabaseError(
+        "Unable to load trending automations",
+        automationsError
+      )
     );
   }
 
@@ -404,7 +458,7 @@ export async function listAutomationSlugs(): Promise<
 
   if (error) {
     throw new Error(
-      `Unable to list automation slugs: ${error.message}`
+      formatSupabaseError("Unable to list automation slugs", error)
     );
   }
 
@@ -426,7 +480,9 @@ export async function getSubscriptionPreferences() {
     .eq("user_id", user.id);
 
   if (error) {
-    throw new Error(`Unable to load subscriptions: ${error.message}`);
+    throw new Error(
+      formatSupabaseError("Unable to load subscriptions", error)
+    );
   }
 
   const map = new Map<SubscriptionType, boolean>();
