@@ -218,14 +218,12 @@ export function EditAutomationForm({ automation }: EditAutomationFormProps) {
       </Field>
       <Field
         label="Prompt"
-        required
-        hint="Exact text to paste into Poke to recreate this automation."
+        hint="Optional. Include the exact text if it helps others recreate this automation."
         error={visibleErrors.prompt}
       >
         <Textarea
           name="prompt"
           rows={5}
-          required
           placeholder="Write a personalised welcome email for {{customer_name}} highlighting the onboarding checklist and assign follow-up tasks to the success team."
           value={formValues.prompt}
           onChange={handleChange("prompt")}

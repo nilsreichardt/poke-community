@@ -16,7 +16,7 @@ export type AutomationFormParsed = {
   title: string;
   summary: string;
   description: string | null;
-  prompt: string;
+  prompt: string | null;
   tags?: string;
 };
 
@@ -33,7 +33,10 @@ export const automationSchema = z.object({
     .string()
     .max(8000, "Description cannot exceed 8000 characters.")
     .nullable(),
-  prompt: z.string().min(1, "Prompt is required."),
+  prompt: z
+    .string()
+    .min(1, "Prompt must include at least one character.")
+    .nullable(),
   tags: z.string().optional(),
 });
 
@@ -50,7 +53,8 @@ export function normalizeAutomationFormValues(
 ): AutomationFormParsed {
   const title = values.title.trim();
   const summary = values.summary.trim();
-  const prompt = values.prompt.trim();
+  const promptInput = values.prompt.trim();
+  const prompt = promptInput.length ? promptInput : null;
 
   const descriptionInput = values.description.trim();
   const description = descriptionInput.length ? descriptionInput : null;
@@ -134,7 +138,7 @@ export function parsedToFormValues(
     title: parsed.title,
     summary: parsed.summary,
     description: parsed.description ?? "",
-    prompt: parsed.prompt,
+    prompt: parsed.prompt ?? "",
     tags: parsed.tags ?? "",
   };
 }

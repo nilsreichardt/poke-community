@@ -353,7 +353,7 @@ export async function createAutomationAction(
     title: normalized.title,
     summary: normalized.summary ?? null,
     description: normalized.description ?? "",
-    prompt: normalized.prompt,
+    prompt: normalized.prompt ?? null,
     tags: normalizedTags ?? null,
     slug,
     user_id: user.id,
@@ -476,7 +476,7 @@ export async function updateAutomationAction(
       title: normalized.title,
       summary: normalized.summary,
       description: normalized.description ?? "",
-      prompt: normalized.prompt,
+      prompt: normalized.prompt ?? null,
       tags: normalizedTags,
       updated_at: new Date().toISOString(),
     })

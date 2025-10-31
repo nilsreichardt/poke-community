@@ -187,14 +187,12 @@ export function AutomationForm() {
       </Field>
       <Field
         label="Prompt"
-        required
-        hint="Exact text to paste into Poke to recreate this automation."
+        hint="Optional. Include the exact text if it helps others recreate this automation."
         error={visibleErrors.prompt}
       >
         <Textarea
           name="prompt"
           rows={5}
-          required
           placeholder="e.g. Monitor round-trip flights departing from SFO or OAK to any destination within the U.S. My total budget is under $60. Dates are flexible from same-day departures up to one week out, and trip duration can be between same-day return and up to 5 days. Every morning at 8 AM, send me a concise summary of any flights that meet these criteria."
           value={formValues.prompt}
           onChange={handleChange("prompt")}

@@ -39,7 +39,7 @@ export type Database = {
           created_at: string | null
           description: string
           id: string
-          prompt: string
+          prompt: string | null
           slug: string
           summary: string | null
           tags: string[] | null
@@ -52,7 +52,7 @@ export type Database = {
           created_at?: string | null
           description: string
           id?: string
-          prompt: string
+          prompt?: string | null
           slug: string
           summary?: string | null
           tags?: string[] | null
@@ -65,7 +65,7 @@ export type Database = {
           created_at?: string | null
           description?: string
           id?: string
-          prompt?: string
+          prompt?: string | null
           slug?: string
           summary?: string | null
           tags?: string[] | null
@@ -478,4 +478,3 @@ export const Constants = {
     Enums: {},
   },
 } as const
-
