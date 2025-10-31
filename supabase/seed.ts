@@ -7,7 +7,6 @@ type SeedUser = {
   id: string;
   email: string;
   name: string;
-  bio: string;
 };
 
 type SeedAutomation = {
@@ -43,49 +42,41 @@ const USERS: SeedUser[] = [
     id: "11111111-1111-1111-1111-111111111111",
     email: "ava@poke.community",
     name: "ava",
-    bio: "Growth marketer testing every workflow in poke.",
   },
   {
     id: "22222222-2222-2222-2222-222222222222",
     email: "liam@poke.community",
     name: "liam",
-    bio: "Operations lead building onboarding journeys.",
   },
   {
     id: "33333333-3333-3333-3333-333333333333",
     email: "mia@poke.community",
     name: "mia",
-    bio: "Lifecycle manager experimenting with launch playbooks.",
   },
   {
     id: "44444444-4444-4444-4444-444444444444",
     email: "noah@poke.community",
     name: "noah",
-    bio: "Go-to-market analyst refining conversion funnels.",
   },
   {
     id: "55555555-5555-5555-5555-555555555555",
     email: "zoe@poke.community",
     name: "zoe",
-    bio: "Product marketer validating messaging automations.",
   },
   {
     id: "66666666-6666-6666-6666-666666666666",
     email: "jessica@poke.community",
     name: "jessica",
-    bio: "Product marketer validating messaging automations.",
   },
   {
     id: "77777777-7777-7777-7777-777777777777",
     email: "bob@poke.community",
     name: "bob",
-    bio: "Some random bio",
   },
   {
     id: "88888888-8888-8888-8888-888888888888",
     email: "jeff@poke.community",
     name: "jeff",
-    bio: "Some random bio with a link to https://poke.community",
   },
 ];
 
@@ -261,14 +252,12 @@ async function main() {
     id: user.id,
     name: user.name,
     email: user.email,
-    bio: user.bio,
     created_at: now.toISOString(),
   }));
 
-  const { error: profilesError } = await supabase.from("profiles").upsert(
-    profileRows,
-    { onConflict: "id" },
-  );
+  const { error: profilesError } = await supabase
+    .from("profiles")
+    .upsert(profileRows, { onConflict: "id" });
 
   if (profilesError) {
     throw new Error(`Failed to seed profiles: ${profilesError.message}`);
