@@ -1,14 +1,6 @@
 'use client';
 
-import {
-  type ChangeEvent,
-  type FormEvent,
-  useCallback,
-  useEffect,
-  useMemo,
-  useRef,
-  useState,
-} from "react";
+import { type ChangeEvent, type FormEvent, useCallback, useEffect, useState } from "react";
 import { usePathname, useRouter } from "next/navigation";
 
 import { Button } from "@/components/ui/button";
@@ -24,14 +16,14 @@ export function SearchForm({ defaultQuery, sort }: SearchFormProps) {
   const [query, setQuery] = useState(defaultQuery);
   const router = useRouter();
   const pathname = usePathname();
-  const pendingQueryRef = useRef<string | null>(null);
-  const latestExpectedQueryRef = useRef(defaultQuery.trim());
+
+  useEffect(() => {
+    setQuery(defaultQuery);
+  }, [defaultQuery]);
 
   const navigateToQuery = useCallback(
     (value: string) => {
       const trimmed = value.trim();
-      pendingQueryRef.current = trimmed;
-      latestExpectedQueryRef.current = trimmed;
 
       const params = new URLSearchParams();
       params.set("sort", sort);
@@ -46,46 +38,34 @@ export function SearchForm({ defaultQuery, sort }: SearchFormProps) {
     [pathname, router, sort],
   );
 
-  useEffect(() => {
-    const normalizedDefault = defaultQuery.trim();
-    const pending = pendingQueryRef.current;
-
-    if (pending !== null && normalizedDefault !== pending) {
-      // Retry the newest search if an older server response arrives late.
-      navigateToQuery(latestExpectedQueryRef.current);
-      return;
-    }
-
-    pendingQueryRef.current = null;
-    latestExpectedQueryRef.current = normalizedDefault;
-    setQuery(defaultQuery);
-  }, [defaultQuery, navigateToQuery]);
-
-  const [debouncedSearch, cancelDebouncedSearch] = useDebouncedCallback(navigateToQuery, 300);
-
   const handleChange = useCallback(
     (event: ChangeEvent<HTMLInputElement>) => {
       const nextValue = event.target.value;
+      const nextTrimmed = nextValue.trim();
+      const previousTrimmed = query.trim();
+
       setQuery(nextValue);
-      debouncedSearch(nextValue);
+
+      if (nextTrimmed === "" && previousTrimmed !== "") {
+        navigateToQuery("");
+      }
     },
-    [debouncedSearch],
+    [navigateToQuery, query],
   );
 
   const handleSubmit = useCallback(
     (event: FormEvent<HTMLFormElement>) => {
       event.preventDefault();
-      cancelDebouncedSearch();
-      navigateToQuery(query);
+      navigateToQuery(query.trim());
     },
-    [cancelDebouncedSearch, navigateToQuery, query],
+    [navigateToQuery, query],
   );
 
   return (
     <form className="flex w-full flex-col gap-3 sm:flex-row" onSubmit={handleSubmit}>
       <Input
         name="q"
-        placeholder="Search by title, summary, or tags"
+        placeholder="Search by title, description, prompt or tags"
         value={query}
         onChange={handleChange}
         className="flex-1"
@@ -96,39 +76,4 @@ export function SearchForm({ defaultQuery, sort }: SearchFormProps) {
       </Button>
     </form>
   );
-}
-
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-function useDebouncedCallback<T extends (...args: any[]) => void>(
-  callback: T,
-  delay: number,
-): [(...args: Parameters<T>) => void, () => void] {
-  const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const latestCallback = useRef(callback);
-
-  useEffect(() => {
-    latestCallback.current = callback;
-  }, [callback]);
-
-  const cancel = useCallback(() => {
-    if (timerRef.current) {
-      clearTimeout(timerRef.current);
-      timerRef.current = null;
-    }
-  }, []);
-
-  const debounced = useMemo<(...args: Parameters<T>) => void>(
-    () =>
-      (...args: Parameters<T>) => {
-        cancel();
-        timerRef.current = setTimeout(() => {
-          latestCallback.current(...args);
-        }, delay);
-      },
-    [cancel, delay],
-  );
-
-  useEffect(() => cancel, [cancel]);
-
-  return [debounced, cancel];
 }
