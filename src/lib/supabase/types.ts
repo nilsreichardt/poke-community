@@ -46,7 +46,6 @@ export type Database = {
           title: string
           updated_at: string | null
           user_id: string
-          vote_total: number
         }
         Insert: {
           created_at?: string | null
@@ -59,7 +58,6 @@ export type Database = {
           title: string
           updated_at?: string | null
           user_id: string
-          vote_total?: number
         }
         Update: {
           created_at?: string | null
@@ -72,7 +70,6 @@ export type Database = {
           title?: string
           updated_at?: string | null
           user_id?: string
-          vote_total?: number
         }
         Relationships: [
           {
@@ -80,6 +77,13 @@ export type Database = {
             columns: ["user_id"]
             isOneToOne: false
             referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "automations_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "public_profiles"
             referencedColumns: ["id"]
           },
         ]
@@ -138,6 +142,13 @@ export type Database = {
             referencedRelation: "profiles"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "subscriptions_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "public_profiles"
+            referencedColumns: ["id"]
+          },
         ]
       }
       votes: {
@@ -184,6 +195,13 @@ export type Database = {
             referencedRelation: "profiles"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "votes_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "public_profiles"
+            referencedColumns: ["id"]
+          },
         ]
       }
     }
@@ -200,13 +218,64 @@ export type Database = {
           tags: string[] | null
           title: string | null
           updated_at: string | null
+          user_id: string | null
           vote_total: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "automations_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "automations_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "public_profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      public_profiles: {
+        Row: {
+          avatar_url: string | null
+          created_at: string | null
+          id: string | null
+          name: string | null
+        }
+        Insert: {
+          avatar_url?: string | null
+          created_at?: string | null
+          id?: string | null
+          name?: string | null
+        }
+        Update: {
+          avatar_url?: string | null
+          created_at?: string | null
+          id?: string | null
+          name?: string | null
         }
         Relationships: []
       }
     }
     Functions: {
-      [_ in never]: never
+      get_user_votes: {
+        Args: { target_ids?: string[] }
+        Returns: {
+          automation_id: string
+          value: number
+        }[]
+      }
+      get_vote_statistics: {
+        Args: { target_ids?: string[] }
+        Returns: {
+          automation_id: string
+          recent_votes: number
+          vote_total: number
+        }[]
+      }
     }
     Enums: {
       [_ in never]: never
@@ -475,3 +544,4 @@ export const Constants = {
     Enums: {},
   },
 } as const
+

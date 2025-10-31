@@ -17,6 +17,7 @@ type AutomationCardProps = {
     } | null;
     user_vote?: number;
     recent_votes?: number;
+    vote_total?: number;
   };
 };
 
@@ -80,7 +81,7 @@ export function AutomationCard({ automation }: AutomationCardProps) {
         <VoteControls
           automationId={automation.id}
           initialVote={automation.user_vote ?? 0}
-          voteTotal={automation.vote_total}
+          voteTotal={automation.vote_total ?? 0}
         />
       </CardFooter>
     </Card>

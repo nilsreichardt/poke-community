@@ -1,4 +1,5 @@
 import { cache } from "react";
+import type { SupabaseClient } from "@supabase/supabase-js";
 import {
   createSupabaseServerClient,
   createSupabaseServiceRoleClient,
@@ -6,8 +7,8 @@ import {
 import type {
   AutomationRecord,
   SubscriptionType,
-  VoteRecord,
 } from "@/lib/supabase/records";
+import type { Database } from "@/lib/supabase/types";
 
 type ProfileRowSubset = {
   id: string;
@@ -15,16 +16,13 @@ type ProfileRowSubset = {
   avatar_url: string | null;
 };
 
-type AutomationRowWithRelations = AutomationRecord & {
+type AutomationRowWithProfile = AutomationRecord & {
   profiles: ProfileRowSubset | null;
-  votes: {
-    value: number;
-    user_id: string;
-  }[] | null;
 };
 
 type AutomationWithRelations = AutomationRecord & {
   profiles: ProfileRowSubset | null;
+  vote_total: number;
   recent_votes?: number;
   user_vote?: number;
 };
@@ -78,6 +76,100 @@ function formatSupabaseError(baseMessage: string, error: unknown): string {
   return baseMessage;
 }
 
+type VoteStatisticRow = {
+  automation_id: string | null;
+  vote_total: number | null;
+  recent_votes: number | null;
+};
+
+type UserVoteRow = {
+  automation_id: string | null;
+  value: number | null;
+};
+
+function normalizeNumber(value: unknown): number {
+  if (typeof value === "number") {
+    return value;
+  }
+
+  if (typeof value === "bigint") {
+    return Number(value);
+  }
+
+  if (typeof value === "string") {
+    const parsed = Number(value);
+    return Number.isFinite(parsed) ? parsed : 0;
+  }
+
+  return 0;
+}
+
+async function getVoteStatisticsMap(
+  client: SupabaseClient<Database>,
+  automationIds: string[],
+): Promise<Map<string, { vote_total: number; recent_votes: number }>> {
+  if (automationIds.length === 0) {
+    return new Map();
+  }
+
+  const { data, error } = await client.rpc("get_vote_statistics", {
+    target_ids: automationIds,
+  });
+
+  if (error) {
+    throw new Error(
+      formatSupabaseError("Unable to load vote statistics", error),
+    );
+  }
+
+  const stats = new Map<string, { vote_total: number; recent_votes: number }>();
+
+  (data as VoteStatisticRow[] | null)?.forEach((row) => {
+    if (!row?.automation_id) {
+      return;
+    }
+
+    stats.set(row.automation_id, {
+      vote_total: normalizeNumber(row.vote_total ?? 0),
+      recent_votes: normalizeNumber(row.recent_votes ?? 0),
+    });
+  });
+
+  return stats;
+}
+
+async function getUserVotesMap(
+  client: SupabaseClient<Database>,
+  automationIds: string[],
+  hasUser: boolean,
+): Promise<Map<string, number>> {
+  if (!hasUser || automationIds.length === 0) {
+    return new Map();
+  }
+
+  const { data, error } = await client.rpc("get_user_votes", {
+    target_ids: automationIds,
+  });
+
+  if (error) {
+    throw new Error(
+      formatSupabaseError("Unable to load vote preferences", error),
+    );
+  }
+
+  const votes = new Map<string, number>();
+
+  (data as UserVoteRow[] | null)?.forEach((row) => {
+    if (!row?.automation_id) {
+      return;
+    }
+
+    votes.set(row.automation_id, normalizeNumber(row.value ?? 0));
+  });
+
+  return votes;
+}
+
 export const getCurrentUser = cache(async () => {
   const supabase = await createSupabaseServerClient();
   const {
@@ -99,17 +191,15 @@ export async function getAutomations(
 
   const supabase = await createSupabaseServerClient();
 
-  // For "top" ordering, we need to use the view to sort by vote_total
   if (options.orderBy === "top") {
-    // First get IDs sorted by vote_total from the view
     let viewQuery = supabase
       .from("automations_with_scores")
-      .select("id, vote_total");
+      .select("id, vote_total, recent_votes");
 
     if (options.search) {
       const likeValue = `%${options.search}%`;
       viewQuery = viewQuery.or(
-        `title.ilike.${likeValue},description.ilike.${likeValue},summary.ilike.${likeValue},prompt.ilike.${likeValue},tags.cs.{${options.search}}`
+        `title.ilike.${likeValue},description.ilike.${likeValue},summary.ilike.${likeValue},prompt.ilike.${likeValue},tags.cs.{${options.search}}`,
       );
     }
 
@@ -123,7 +213,7 @@ export async function getAutomations(
 
     if (viewError) {
       throw new Error(
-        formatSupabaseError("Unable to load automations", viewError)
+        formatSupabaseError("Unable to load automations", viewError),
       );
     }
 
@@ -131,60 +221,74 @@ export async function getAutomations(
       return [];
     }
 
-    const ids = rankedData.map((item) => item.id);
-    const nonNullIds = ids.filter((id): id is string => id !== null);
+    const ranked = rankedData
+      .map((item) =>
+        typeof item.id === "string"
+          ? {
+              id: item.id,
+              vote_total: normalizeNumber(item.vote_total ?? 0),
+              recent_votes: normalizeNumber(item.recent_votes ?? 0),
+            }
+          : null,
+      )
+      .filter(
+        (item): item is { id: string; vote_total: number; recent_votes: number } =>
+          item !== null,
+      );
 
-    // Then fetch full automation data
+    const ids = ranked.map((item) => item.id);
+    const statsMap = new Map(
+      ranked.map((item) => [item.id, item] as const),
+    );
+
     const { data, error } = await supabase
       .from("automations")
-      .select(
-        "*, profiles(id, name, avatar_url), votes(value, automation_id, user_id)"
-      )
-      .in("id", nonNullIds)
-      .returns<AutomationRowWithRelations[]>();
+      .select("*, profiles(id, name, avatar_url)")
+      .in("id", ids)
+      .returns<AutomationRowWithProfile[]>();
 
     if (error) {
       throw new Error(
-        formatSupabaseError("Unable to load automations", error)
+        formatSupabaseError("Unable to load automations", error),
       );
     }
 
     const rows = data ?? [];
-    const automationMap = new Map(rows.map((row) => [row.id, row]));
+    const automationsById = new Map(rows.map((row) => [row.id, row] as const));
+    const userVotes = await getUserVotesMap(
+      supabase,
+      ids,
+      Boolean(user?.id),
+    );
 
-    // Return in the order from the view
-    return nonNullIds
-      .map((id) => automationMap.get(id))
-      .filter((item): item is AutomationRowWithRelations => Boolean(item))
-      .map<AutomationWithRelations>((item) => {
-        const votes = Array.isArray(item.votes)
-          ? (item.votes as VoteRecord[])
-          : [];
-        const userVote =
-          votes.find((vote) => vote.user_id === user?.id)?.value ?? 0;
-        const voteTotal = votes.reduce((sum, vote) => sum + vote.value, 0);
-        const { votes: _unusedVotes, ...rest } = item;
-        void _unusedVotes;
+    return ids
+      .map((id) => automationsById.get(id))
+      .filter(
+        (row): row is AutomationRowWithProfile => row !== undefined && row !== null,
+      )
+      .map<AutomationWithRelations>((row) => {
+        const stats = statsMap.get(row.id) ?? {
+          vote_total: 0,
+          recent_votes: 0,
+        };
 
         return {
-          ...rest,
-          vote_total: voteTotal,
-          user_vote: userVote,
+          ...row,
+          vote_total: stats.vote_total,
+          recent_votes: stats.recent_votes,
+          user_vote: userVotes.get(row.id) ?? 0,
         };
       });
   }
 
-  // For other orderings, query automations table directly
   let query = supabase
     .from("automations")
-    .select(
-      "*, profiles(id, name, avatar_url), votes(value, automation_id, user_id)"
-    );
+    .select("*, profiles(id, name, avatar_url)");
 
   if (options.search) {
     const likeValue = `%${options.search}%`;
     query = query.or(
-      `title.ilike.${likeValue},description.ilike.${likeValue},summary.ilike.${likeValue},tags.cs.{${options.search}}`
+      `title.ilike.${likeValue},description.ilike.${likeValue},summary.ilike.${likeValue},tags.cs.{${options.search}}`,
     );
   }
 
@@ -195,30 +299,30 @@ export async function getAutomations(
   query = query.order("created_at", { ascending: false });
 
   const { data, error } =
-    await query.returns<AutomationRowWithRelations[]>();
+    await query.returns<AutomationRowWithProfile[]>();
 
   if (error) {
     throw new Error(
-      formatSupabaseError("Unable to load automations", error)
+      formatSupabaseError("Unable to load automations", error),
     );
   }
 
   const rows = data ?? [];
+  const ids = rows.map((row) => row.id);
 
-  return rows.map<AutomationWithRelations>((item) => {
-    const votes = Array.isArray(item.votes)
-      ? (item.votes as VoteRecord[])
-      : [];
-    const userVote =
-      votes.find((vote) => vote.user_id === user?.id)?.value ?? 0;
-    const voteTotal = votes.reduce((sum, vote) => sum + vote.value, 0);
-    const { votes: _unusedVotes, ...rest } = item;
-    void _unusedVotes;
+  const [statsMap, userVotes] = await Promise.all([
+    getVoteStatisticsMap(supabase, ids),
+    getUserVotesMap(supabase, ids, Boolean(user?.id)),
+  ]);
+
+  return rows.map<AutomationWithRelations>((row) => {
+    const stats = statsMap.get(row.id);
 
     return {
-      ...rest,
-      vote_total: voteTotal,
-      user_vote: userVote,
+      ...row,
+      vote_total: stats?.vote_total ?? 0,
+      recent_votes: stats?.recent_votes ?? 0,
+      user_vote: userVotes.get(row.id) ?? 0,
     };
   });
 }
@@ -236,35 +340,33 @@ export async function getAutomationsForCurrentUser(): Promise<
 
   const { data, error } = await supabase
     .from("automations")
-    .select(
-      "*, profiles(id, name, avatar_url), votes(value, automation_id, user_id)"
-    )
+    .select("*, profiles(id, name, avatar_url)")
     .eq("user_id", user.id)
     .order("created_at", { ascending: false })
-    .returns<AutomationRowWithRelations[]>();
+    .returns<AutomationRowWithProfile[]>();
 
   if (error) {
     throw new Error(
-      formatSupabaseError("Unable to load your automations", error)
+      formatSupabaseError("Unable to load your automations", error),
     );
   }
 
   const rows = data ?? [];
+  const ids = rows.map((row) => row.id);
 
-  return rows.map<AutomationWithRelations>((item) => {
-    const votes = Array.isArray(item.votes)
-      ? (item.votes as VoteRecord[])
-      : [];
-    const userVote =
-      votes.find((vote) => vote.user_id === user.id)?.value ?? 0;
-    const voteTotal = votes.reduce((sum, vote) => sum + vote.value, 0);
-    const { votes: _unusedVotes, ...rest } = item;
-    void _unusedVotes;
+  const [statsMap, userVotes] = await Promise.all([
+    getVoteStatisticsMap(supabase, ids),
+    getUserVotesMap(supabase, ids, true),
+  ]);
+
+  return rows.map<AutomationWithRelations>((row) => {
+    const stats = statsMap.get(row.id);
 
     return {
-      ...rest,
-      vote_total: voteTotal,
-      user_vote: userVote,
+      ...row,
+      vote_total: stats?.vote_total ?? 0,
+      recent_votes: stats?.recent_votes ?? 0,
+      user_vote: userVotes.get(row.id) ?? 0,
     };
   });
 }
@@ -313,37 +415,34 @@ export async function getAutomationBySlug(
 
   const { data, error } = await supabase
     .from("automations")
-    .select(
-      "*, profiles(id, name, avatar_url), votes(value, automation_id, user_id)"
-    )
+    .select("*, profiles(id, name, avatar_url)")
     .eq("slug", slug)
     .maybeSingle();
 
   if (error) {
     throw new Error(
-      formatSupabaseError("Unable to load automation", error)
+      formatSupabaseError("Unable to load automation", error),
     );
   }
 
-  const automation = data as AutomationRowWithRelations | null;
+  const automation = data as (AutomationRowWithProfile & { user_id: string }) | null;
 
   if (!automation) {
     return null;
   }
 
-  const votes = Array.isArray(automation.votes)
-    ? (automation.votes as VoteRecord[])
-    : [];
-  const userVote =
-    votes.find((vote) => vote.user_id === user?.id)?.value ?? 0;
-  const voteTotal = votes.reduce((sum, vote) => sum + vote.value, 0);
-  const { votes: _unusedVotes, ...rest } = automation;
-  void _unusedVotes;
+  const [statsMap, userVotes] = await Promise.all([
+    getVoteStatisticsMap(supabase, [automation.id]),
+    getUserVotesMap(supabase, [automation.id], Boolean(user?.id)),
+  ]);
+
+  const stats = statsMap.get(automation.id);
 
   return {
-    ...rest,
-    vote_total: voteTotal,
-    user_vote: userVote,
+    ...automation,
+    vote_total: stats?.vote_total ?? 0,
+    recent_votes: stats?.recent_votes ?? 0,
+    user_vote: userVotes.get(automation.id) ?? 0,
   };
 }
 
@@ -372,42 +471,40 @@ export async function getTrendingAutomations(limit = 6) {
     return [];
   }
 
-  const rankedAutomations = rankings
+  const ranked = rankings
     .map((item) =>
       typeof item.id === "string"
         ? {
             id: item.id,
-            recent_votes: item.recent_votes ?? 0,
+            vote_total: normalizeNumber(item.vote_total ?? 0),
+            recent_votes: normalizeNumber(item.recent_votes ?? 0),
           }
-        : null
+        : null,
     )
     .filter(
-      (item): item is { id: string; recent_votes: number } => item !== null
+      (item): item is { id: string; vote_total: number; recent_votes: number } =>
+        item !== null,
     );
 
-  if (!rankedAutomations.length) {
+  if (!ranked.length) {
     return [];
   }
 
-  const ids = rankedAutomations.map((item) => item.id);
-  const rankingsMap = new Map(
-    rankedAutomations.map((item) => [item.id, item.recent_votes] as const)
-  );
+  const ids = ranked.map((item) => item.id);
+  const statsMap = new Map(ranked.map((item) => [item.id, item] as const));
 
   const { data: automationRows, error: automationsError } = await supabase
     .from("automations")
-    .select(
-      "*, profiles(id, name, avatar_url), votes(value, automation_id, user_id)"
-    )
+    .select("*, profiles(id, name, avatar_url)")
     .in("id", ids)
-    .returns<AutomationRowWithRelations[]>();
+    .returns<AutomationRowWithProfile[]>();
 
   if (automationsError) {
     throw new Error(
       formatSupabaseError(
         "Unable to load trending automations",
-        automationsError
-      )
+        automationsError,
+      ),
     );
   }
 
@@ -416,24 +513,26 @@ export async function getTrendingAutomations(limit = 6) {
     rows.map((row) => [row.id, row] as const)
   );
 
-  return rankedAutomations
+  const userVotes = await getUserVotesMap(
+    supabase,
+    ids,
+    Boolean(user?.id),
+  );
+
+  return ranked
     .map(({ id }) => automationMap.get(id))
-    .filter((item): item is AutomationRowWithRelations => Boolean(item))
+    .filter(
+      (item): item is AutomationRowWithProfile =>
+        item !== undefined && item !== null,
+    )
     .map<AutomationWithRelations>((item) => {
-      const votes = Array.isArray(item.votes)
-        ? (item.votes as VoteRecord[])
-        : [];
-      const userVote =
-        votes.find((vote) => vote.user_id === user?.id)?.value ?? 0;
-      const voteTotal = votes.reduce((sum, vote) => sum + vote.value, 0);
-      const { votes: _unusedVotes, ...rest } = item;
-      void _unusedVotes;
+      const stats = statsMap.get(item.id);
 
       return {
-        ...rest,
-        vote_total: voteTotal,
-        recent_votes: rankingsMap.get(item.id) ?? 0,
-        user_vote: userVote,
+        ...item,
+        vote_total: stats?.vote_total ?? 0,
+        recent_votes: stats?.recent_votes ?? 0,
+        user_vote: userVotes.get(item.id) ?? 0,
       };
     });
 }
