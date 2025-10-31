@@ -1,5 +1,7 @@
 <h1 align="center">poke.community</h1>
 
+<img width="1552" height="981" alt="poke-community-screenshot" src="https://github.com/user-attachments/assets/955c557a-f137-42ee-8afa-73d503e34466" />
+
 Community hub for sharing and discovering automations built with [Poke](https://poke.com). Makers can publish their workflows, the community can vote and discuss, and subscribers get notified whenever something new or trending drops. This project is not affiliated with [Poke](https://poke.com) or [The Interaction Company of California](https://interaction.co/about).
 
 ## Features
