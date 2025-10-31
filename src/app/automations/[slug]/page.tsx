@@ -86,7 +86,7 @@ export async function generateMetadata({
       siteName: siteMetadata.name,
       publishedTime,
       modifiedTime,
-      authors: automation.profiles?.name ? [automation.profiles.name] : undefined,
+      authors: automation.public_profiles?.name ? [automation.public_profiles.name] : undefined,
       tags: automation.tags ?? undefined,
       images: [
         {
@@ -123,7 +123,7 @@ export default async function AutomationPage({ params }: AutomationPageProps) {
   const isAuthor = user?.id === automation.user_id;
 
   const canonicalUrl = absoluteUrl(`/automations/${automation.slug}`);
-  const authorName = automation.profiles?.name ?? null;
+  const authorName = automation.public_profiles?.name ?? null;
   const createdAt = automation.created_at
     ? new Date(automation.created_at)
     : null;
@@ -233,10 +233,10 @@ function AutomationJsonLd({
       automation.updated_at ?? automation.created_at ?? undefined,
     url: canonicalUrl,
     mainEntityOfPage: canonicalUrl,
-    author: automation.profiles?.name
+    author: automation.public_profiles?.name
       ? {
           "@type": "Person",
-          name: automation.profiles.name,
+          name: automation.public_profiles.name,
         }
       : {
           "@type": "Organization",

@@ -10,7 +10,7 @@ import { Badge } from "@/components/ui/badge";
 
 type AutomationCardProps = {
   automation: AutomationRecord & {
-    profiles: {
+    public_profiles: {
       id: string;
       name: string | null;
       avatar_url: string | null;
@@ -24,7 +24,7 @@ type AutomationCardProps = {
 export function AutomationCard({ automation }: AutomationCardProps) {
   const [isHeaderHover, setIsHeaderHover] = useState(false);
   const ownerName =
-    automation.profiles?.name ??
+    automation.public_profiles?.name ??
     "Anonymous member";
   const createdAt = automation.created_at
     ? new Date(automation.created_at)
