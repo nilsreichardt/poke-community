@@ -13,13 +13,7 @@ import rehypeSanitize from "rehype-sanitize";
 import remarkBreaks from "remark-breaks";
 import remarkGfm from "remark-gfm";
 import type { Pluggable, PluggableList } from "unified";
-import {
-  Bold,
-  Heading1,
-  Italic,
-  List,
-  Underline,
-} from "lucide-react";
+import { Bold, Heading1, Italic, List, Underline } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { cn } from "@/lib/utils";
@@ -53,9 +47,7 @@ export function MarkdownEditor({
   const textareaRef = useRef<HTMLTextAreaElement | null>(null);
   const [mode, setMode] = useState<EditorMode>("edit");
   const currentValue =
-    value ??
-    textareaRef.current?.value ??
-    (defaultValue ?? "");
+    value ?? textareaRef.current?.value ?? defaultValue ?? "";
 
   const previewMinHeight = useMemo(() => {
     const parsedRows =
@@ -83,13 +75,11 @@ export function MarkdownEditor({
       replacement,
       selectionStart,
       selectionEnd,
-      "preserve"
+      "preserve",
     );
     triggerInput();
     const nextStart = selectionStart + before.length;
-    const nextEnd = hasSelection
-      ? nextStart + selectedText.length
-      : nextStart;
+    const nextEnd = hasSelection ? nextStart + selectedText.length : nextStart;
     requestAnimationFrame(() => {
       textarea.setSelectionRange(nextStart, nextEnd);
     });
@@ -126,7 +116,7 @@ export function MarkdownEditor({
       if (selectedText) {
         textarea.setSelectionRange(
           selectionStart,
-          selectionStart + formatted.length
+          selectionStart + formatted.length,
         );
       } else {
         const cursor = selectionStart + formatted.length;
@@ -153,12 +143,7 @@ export function MarkdownEditor({
       const normalized = line.trimStart().startsWith("# ")
         ? line
         : `${line.slice(0, leadingSpaces)}# ${line.slice(leadingSpaces)}`;
-      textarea.setRangeText(
-        normalized,
-        lineStart,
-        resolvedLineEnd,
-        "start"
-      );
+      textarea.setRangeText(normalized, lineStart, resolvedLineEnd, "start");
       triggerInput();
       requestAnimationFrame(() => {
         const caret = selectionStart + 2;
@@ -186,7 +171,7 @@ export function MarkdownEditor({
     requestAnimationFrame(() => {
       textarea.setSelectionRange(
         selectionStart,
-        selectionStart + formatted.length
+        selectionStart + formatted.length,
       );
     });
   };
@@ -279,7 +264,7 @@ export function MarkdownEditor({
           className={cn(
             "min-h-0 resize-y rounded-b-md border-0 bg-transparent shadow-none focus-visible:border-0 focus-visible:ring-0",
             mode === "preview" ? "hidden" : "",
-            className
+            className,
           )}
           {...props}
           {...(value !== undefined
@@ -291,7 +276,7 @@ export function MarkdownEditor({
         {mode === "preview" ? (
           <div
             className={cn(
-              "rounded-b-md bg-background px-3 py-3 text-sm leading-relaxed text-foreground space-y-4"
+              "rounded-b-md bg-background px-3 py-3 text-sm leading-relaxed text-foreground space-y-4",
             )}
             style={{ minHeight: previewMinHeight }}
           >
@@ -330,7 +315,7 @@ function TabButton({
         "rounded-md px-3 py-1 text-xs font-semibold transition-colors",
         active
           ? "border border-border bg-background text-foreground shadow-xs"
-          : "text-muted-foreground hover:text-foreground"
+          : "text-muted-foreground hover:text-foreground",
       )}
     >
       {children}

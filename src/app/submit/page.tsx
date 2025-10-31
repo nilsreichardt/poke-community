@@ -40,10 +40,13 @@ export default async function SubmitPage() {
   return (
     <div className="space-y-6">
       <div className="space-y-2">
-        <h1 className="text-3xl font-semibold tracking-tight">Share a Poke automation</h1>
+        <h1 className="text-3xl font-semibold tracking-tight">
+          Share a Poke automation
+        </h1>
         <p className="text-sm text-muted-foreground">
-          Tell the community what your automation does, who it helps, and link out to any templates or resources.
-          You can always edit or remove your automation later.
+          Tell the community what your automation does, who it helps, and link
+          out to any templates or resources. You can always edit or remove your
+          automation later.
         </p>
       </div>
       <AutomationForm />
@@ -60,7 +63,9 @@ function SignInPrompt() {
         You need to be signed in to publish an automation.
       </p>
       <Button asChild>
-        <Link href={`/auth/sign-in?redirectTo=${encodeURIComponent(redirectTo)}`}>
+        <Link
+          href={`/auth/sign-in?redirectTo=${encodeURIComponent(redirectTo)}`}
+        >
           Sign in or register
         </Link>
       </Button>

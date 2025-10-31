@@ -1,8 +1,5 @@
 import { NextResponse } from "next/server";
-import {
-  parseRedirectParam,
-  revalidateAuthPaths,
-} from "@/lib/auth/redirects";
+import { parseRedirectParam, revalidateAuthPaths } from "@/lib/auth/redirects";
 import { upsertProfileFromSession } from "@/lib/profiles";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 
@@ -15,7 +12,7 @@ export async function GET(request: Request) {
 
   if (error) {
     return NextResponse.redirect(
-      buildSignInErrorUrl(requestUrl, redirectTo, error, errorDescription)
+      buildSignInErrorUrl(requestUrl, redirectTo, error, errorDescription),
     );
   }
 
@@ -27,8 +24,8 @@ export async function GET(request: Request) {
         requestUrl,
         redirectTo,
         "missing_code",
-        "We could not complete Google sign-in. Please try again."
-      )
+        "We could not complete Google sign-in. Please try again.",
+      ),
     );
   }
 
@@ -42,8 +39,8 @@ export async function GET(request: Request) {
         requestUrl,
         redirectTo,
         "exchange_error",
-        exchangeError.message
-      )
+        exchangeError.message,
+      ),
     );
   }
 
@@ -61,7 +58,7 @@ function buildSignInErrorUrl(
   requestUrl: URL,
   redirectTo: string,
   error: string,
-  description?: string | null
+  description?: string | null,
 ) {
   const url = new URL("/auth/sign-in", requestUrl.origin);
   url.searchParams.set("error", error);

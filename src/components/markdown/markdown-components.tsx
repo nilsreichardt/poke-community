@@ -24,7 +24,7 @@ const additionalTags = [
 ];
 
 const mergedTagNames = Array.from(
-  new Set([...(defaultSchema.tagNames ?? []), ...additionalTags])
+  new Set([...(defaultSchema.tagNames ?? []), ...additionalTags]),
 );
 
 export const markdownSanitizeSchema: Schema = {
@@ -65,7 +65,11 @@ const CodeRenderer = ({ className, children, inline, ...props }: CodeProps) => {
 };
 
 export const automationMarkdownComponents = {
-  p: ({ className, children, ...props }: HTMLAttributes<HTMLParagraphElement>) => (
+  p: ({
+    className,
+    children,
+    ...props
+  }: HTMLAttributes<HTMLParagraphElement>) => (
     <p
       {...props}
       className={cn("leading-relaxed text-foreground/90", className)}
@@ -86,7 +90,7 @@ export const automationMarkdownComponents = {
       rel="noopener noreferrer"
       className={cn(
         "font-medium text-primary underline-offset-2 hover:underline",
-        className
+        className,
       )}
     >
       {children}
@@ -103,7 +107,11 @@ export const automationMarkdownComponents = {
       {children}
     </ol>
   ),
-  h2: ({ className, children, ...props }: HTMLAttributes<HTMLHeadingElement>) => (
+  h2: ({
+    className,
+    children,
+    ...props
+  }: HTMLAttributes<HTMLHeadingElement>) => (
     <h2
       {...props}
       className={cn("text-lg font-semibold text-foreground", className)}
@@ -111,7 +119,11 @@ export const automationMarkdownComponents = {
       {children}
     </h2>
   ),
-  h3: ({ className, children, ...props }: HTMLAttributes<HTMLHeadingElement>) => (
+  h3: ({
+    className,
+    children,
+    ...props
+  }: HTMLAttributes<HTMLHeadingElement>) => (
     <h3
       {...props}
       className={cn("text-base font-semibold text-foreground", className)}
@@ -120,10 +132,7 @@ export const automationMarkdownComponents = {
     </h3>
   ),
   u: ({ className, children, ...props }: HTMLAttributes<HTMLElement>) => (
-    <u
-      {...props}
-      className={cn("underline underline-offset-2", className)}
-    >
+    <u {...props} className={cn("underline underline-offset-2", className)}>
       {children}
     </u>
   ),
@@ -135,24 +144,35 @@ export const automationMarkdownComponents = {
     <div className="w-full overflow-x-auto">
       <table
         {...props}
-        className={cn("w-full min-w-[24rem] table-auto border-collapse", className)}
+        className={cn(
+          "w-full min-w-[24rem] table-auto border-collapse",
+          className,
+        )}
       >
         {children}
       </table>
     </div>
   ),
-  th: ({ className, children, ...props }: ThHTMLAttributes<HTMLTableCellElement>) => (
+  th: ({
+    className,
+    children,
+    ...props
+  }: ThHTMLAttributes<HTMLTableCellElement>) => (
     <th
       {...props}
       className={cn(
         "border border-border bg-muted px-3 py-2 text-left text-xs font-semibold uppercase tracking-wide text-muted-foreground",
-        className
+        className,
       )}
     >
       {children}
     </th>
   ),
-  td: ({ className, children, ...props }: TdHTMLAttributes<HTMLTableCellElement>) => (
+  td: ({
+    className,
+    children,
+    ...props
+  }: TdHTMLAttributes<HTMLTableCellElement>) => (
     <td
       {...props}
       className={cn("border border-border px-3 py-2 text-sm", className)}
@@ -169,7 +189,7 @@ export const automationMarkdownComponents = {
       {...props}
       className={cn(
         "border-l-2 border-border/70 pl-4 text-muted-foreground italic",
-        className
+        className,
       )}
     >
       {children}

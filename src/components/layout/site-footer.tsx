@@ -19,18 +19,34 @@ export function SiteFooter() {
                 Privacy Policy
               </Link>
             </p>
-            <Link href="https://github.com/nilsreichardt/poke-community" target="_blank" rel="noopener noreferrer" className="hover:underline">
+            <Link
+              href="https://github.com/nilsreichardt/poke-community"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="hover:underline"
+            >
               GitHub
             </Link>
           </div>
           <div className="flex flex-col gap-1 sm:ml-auto">
             <p className="max-w-[60ch] text-right">
-              poke.community is an independent project and is not affiliated with or endorsed by{" "}
-              <Link href="https://poke.com" target="_blank" rel="noopener noreferrer" className="hover:underline">
+              poke.community is an independent project and is not affiliated
+              with or endorsed by{" "}
+              <Link
+                href="https://poke.com"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="hover:underline"
+              >
                 Poke
               </Link>{" "}
               or{" "}
-              <Link href="https://interaction.co/about" target="_blank" rel="noopener noreferrer" className="hover:underline">
+              <Link
+                href="https://interaction.co/about"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="hover:underline"
+              >
                 The Interaction Company of California
               </Link>
               .

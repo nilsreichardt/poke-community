@@ -1,14 +1,13 @@
 import { createHmac, timingSafeEqual } from "node:crypto";
 
-const SITE_URL =
-  process.env.NEXT_PUBLIC_SITE_URL ?? "https://poke.community";
+const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL ?? "https://poke.community";
 
 const UNSUBSCRIBE_SECRET = process.env.UNSUBSCRIBE_SECRET;
 
 function ensureSecretConfigured() {
   if (!UNSUBSCRIBE_SECRET) {
     throw new Error(
-      "Unsubscribe secret is not configured. Set the UNSUBSCRIBE_SECRET environment variable."
+      "Unsubscribe secret is not configured. Set the UNSUBSCRIBE_SECRET environment variable.",
     );
   }
 }
@@ -21,7 +20,7 @@ function normalizeSiteUrl(path: string) {
 
 export function createUnsubscribeToken(
   subscriptionId: string,
-  type: SubscriptionType
+  type: SubscriptionType,
 ) {
   ensureSecretConfigured();
 
@@ -34,7 +33,7 @@ export function createUnsubscribeToken(
 
 export function createUnsubscribeUrl(
   subscriptionId: string,
-  type: SubscriptionType
+  type: SubscriptionType,
 ) {
   const token = createUnsubscribeToken(subscriptionId, type);
   const unsubscribePath = `/unsubscribe/${subscriptionId}?type=${encodeURIComponent(type)}&token=${token}`;
@@ -45,7 +44,7 @@ export function createUnsubscribeUrl(
 export function verifyUnsubscribeToken(
   subscriptionId: string,
   type: string,
-  token: string
+  token: string,
 ): token is string {
   if (!token || !subscriptionId || !type) {
     return false;
@@ -59,7 +58,7 @@ export function verifyUnsubscribeToken(
 
   const expectedToken = createUnsubscribeToken(
     subscriptionId,
-    type as SubscriptionType
+    type as SubscriptionType,
   );
 
   if (token.length !== expectedToken.length) {
@@ -70,8 +69,7 @@ export function verifyUnsubscribeToken(
     const provided = Buffer.from(token, "hex");
     const expected = Buffer.from(expectedToken, "hex");
     return (
-      provided.length === expected.length &&
-      timingSafeEqual(provided, expected)
+      provided.length === expected.length && timingSafeEqual(provided, expected)
     );
   } catch {
     return false;

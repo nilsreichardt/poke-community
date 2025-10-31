@@ -5,10 +5,7 @@ export async function upsertProfileFromSession(user: User) {
   const supabase = await createSupabaseServerClient("mutate");
   const metadata = user.user_metadata as Record<string, string | undefined>;
   const name =
-    metadata?.name ??
-    metadata?.full_name ??
-    user.email?.split("@")[0] ??
-    null;
+    metadata?.name ?? metadata?.full_name ?? user.email?.split("@")[0] ?? null;
 
   const { error } = await supabase.from("profiles").upsert(
     {
@@ -18,7 +15,7 @@ export async function upsertProfileFromSession(user: User) {
     },
     {
       onConflict: "id",
-    }
+    },
   );
 
   if (error) {

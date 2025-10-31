@@ -35,11 +35,13 @@ export function AutomationForm() {
   const router = useRouter();
   const [state, formAction] = useActionState(
     createAutomationAction,
-    automationFormInitialState
+    automationFormInitialState,
   );
-  const [formValues, setFormValues] = useState(automationFormInitialState.values);
+  const [formValues, setFormValues] = useState(
+    automationFormInitialState.values,
+  );
   const [fieldErrors, setFieldErrors] = useState(
-    automationFormInitialState.fieldErrors
+    automationFormInitialState.fieldErrors,
   );
   const [submitError, setSubmitError] = useState<string | null>(null);
   const [touchedFields, setTouchedFields] = useState(INITIAL_TOUCHED_STATE);
@@ -78,34 +80,33 @@ export function AutomationForm() {
 
   const handleChange =
     (field: keyof AutomationFormValues) =>
-      (event: ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
-        const value = event.target.value;
-        setTouchedFields((prev) => ({
-          ...prev,
-          [field]: true,
-        }));
-        setFormValues((prev) => {
-          const next = {
-            ...prev,
-            [field]: value,
-          };
-          const validation = validateAutomationForm(next);
-          setFieldErrors(validation.fieldErrors);
-          return next;
-        });
-
-        if (submitError) {
-          setSubmitError(null);
-        }
-      };
-
-  const handleBlur =
-    (field: keyof AutomationFormValues) => () => {
+    (event: ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+      const value = event.target.value;
       setTouchedFields((prev) => ({
         ...prev,
         [field]: true,
       }));
+      setFormValues((prev) => {
+        const next = {
+          ...prev,
+          [field]: value,
+        };
+        const validation = validateAutomationForm(next);
+        setFieldErrors(validation.fieldErrors);
+        return next;
+      });
+
+      if (submitError) {
+        setSubmitError(null);
+      }
     };
+
+  const handleBlur = (field: keyof AutomationFormValues) => () => {
+    setTouchedFields((prev) => ({
+      ...prev,
+      [field]: true,
+    }));
+  };
 
   const handleSubmit = (event: FormEvent<HTMLFormElement>) => {
     const validation = validateAutomationForm(formValues);
