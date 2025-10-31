@@ -109,7 +109,7 @@ export async function getAutomations(
     if (options.search) {
       const likeValue = `%${options.search}%`;
       viewQuery = viewQuery.or(
-        `title.ilike.${likeValue},description.ilike.${likeValue},summary.ilike.${likeValue}`
+        `title.ilike.${likeValue},description.ilike.${likeValue},summary.ilike.${likeValue},prompt.ilike.${likeValue},tags.cs.{${options.search}}`
       );
     }
 
@@ -184,7 +184,7 @@ export async function getAutomations(
   if (options.search) {
     const likeValue = `%${options.search}%`;
     query = query.or(
-      `title.ilike.${likeValue},description.ilike.${likeValue},summary.ilike.${likeValue}`
+      `title.ilike.${likeValue},description.ilike.${likeValue},summary.ilike.${likeValue},tags.cs.{${options.search}}`
     );
   }
 
