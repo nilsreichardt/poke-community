@@ -2,7 +2,11 @@ import { AutomationCard } from "@/components/automation/automation-card";
 import { AutoEnableSubscription } from "@/components/automations/auto-enable-subscription";
 import { CompactNotificationSubscription } from "@/components/automations/notification-subscription";
 import { Button } from "@/components/ui/button";
-import { getAutomations, getCurrentUser, getSubscriptionPreferences } from "@/lib/data/automations";
+import {
+  getAutomations,
+  getCurrentUser,
+  getSubscriptionPreferences,
+} from "@/lib/data/automations";
 import { absoluteUrl, siteMetadata } from "@/lib/seo";
 import { FilterIcon, PlusIcon } from "lucide-react";
 import type { Metadata } from "next";
@@ -47,7 +51,9 @@ export default async function AutomationsPage({
   const sortParam = normalizeParam(params.sort) === "top" ? "top" : "new";
 
   const user = await getCurrentUser();
-  const preferences = user ? (await getSubscriptionPreferences()) ?? new Map() : new Map();
+  const preferences = user
+    ? ((await getSubscriptionPreferences()) ?? new Map())
+    : new Map();
 
   const automations = await getAutomations({
     search: q || undefined,
@@ -60,17 +66,23 @@ export default async function AutomationsPage({
       <header className="grid gap-4 lg:grid-cols-[1fr_auto]">
         <div className="space-y-4">
           <div>
-            <h1 className="text-3xl font-semibold tracking-tight">Community automations</h1>
+            <h1 className="text-3xl font-semibold tracking-tight">
+              Community automations
+            </h1>
             <p className="mt-2 max-w-2xl text-sm text-muted-foreground">
-              Browse every automation submitted by the poke community. Use the search to filter by topic or vote count, and
-              click any card to view the full breakdown.
+              Browse every automation submitted by the poke community. Use the
+              search to filter by topic or vote count, and click any card to
+              view the full breakdown.
             </p>
           </div>
           <SearchForm defaultQuery={q} sort={sortParam} />
         </div>
 
         <div className="flex flex-col gap-4 lg:items-end mt-3.5">
-          <CompactNotificationSubscription isSignedIn={!!user} preferences={preferences} />
+          <CompactNotificationSubscription
+            isSignedIn={!!user}
+            preferences={preferences}
+          />
           <div className="flex flex-wrap gap-3">
             <SortToggle current={sortParam} query={q} />
             <Button asChild>
@@ -119,7 +131,9 @@ function SortToggle({
   return (
     <Button asChild variant="secondary">
       <Link href={href}>
-        <FilterIcon className="-ml-0.5 h-4 w-4" />{label}</Link>
+        <FilterIcon className="-ml-0.5 h-4 w-4" />
+        {label}
+      </Link>
     </Button>
   );
 }

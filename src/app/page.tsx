@@ -3,10 +3,7 @@ import Link from "next/link";
 import { CloudOff } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { AutomationCard } from "@/components/automation/automation-card";
-import {
-  getAutomations,
-  getTrendingAutomations,
-} from "@/lib/data/automations";
+import { getAutomations, getTrendingAutomations } from "@/lib/data/automations";
 import { absoluteUrl } from "@/lib/seo";
 
 export const metadata: Metadata = {
@@ -27,9 +24,7 @@ export default async function Home() {
       getAutomations({ limit: 6, orderBy: "new" }),
     ]);
   } catch (error) {
-    return (
-      <ServiceUnavailable message={getServiceOutageMessage(error)} />
-    );
+    return <ServiceUnavailable message={getServiceOutageMessage(error)} />;
   }
 
   return (
@@ -117,7 +112,9 @@ function HeroSection() {
             Discover & Share Poke Automations
           </h1>
           <p className="text-base text-muted-foreground sm:text-lg">
-            Don’t rely on luck to find great automations on X. Explore, share, and follow the best Poke automations — and get notified when new ones start trending.
+            Don’t rely on luck to find great automations on X. Explore, share,
+            and follow the best Poke automations — and get notified when new
+            ones start trending.
           </p>
           <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
             <Button size="lg" asChild>
@@ -128,12 +125,23 @@ function HeroSection() {
             </Button>
           </div>
           <p className="text-xs text-muted-foreground">
-            poke.community is an independent project and is not affiliated with or endorsed by{" "}
-            <Link href="https://poke.com" target="_blank" rel="noopener noreferrer" className="hover:underline">
+            poke.community is an independent project and is not affiliated with
+            or endorsed by{" "}
+            <Link
+              href="https://poke.com"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="hover:underline"
+            >
               Poke
             </Link>{" "}
             or{" "}
-            <Link href="https://interaction.co/about" target="_blank" rel="noopener noreferrer" className="hover:underline">
+            <Link
+              href="https://interaction.co/about"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="hover:underline"
+            >
               The Interaction Company of California
             </Link>
             .
@@ -162,14 +170,17 @@ function ServiceUnavailable({ message }: { message: string }) {
             <CloudOff className="h-8 w-8" aria-hidden="true" />
           </div>
           <div className="space-y-3">
-            <h1 className="text-2xl font-semibold">We can’t reach our automations right now</h1>
+            <h1 className="text-2xl font-semibold">
+              We can’t reach our automations right now
+            </h1>
             <p className="text-sm text-muted-foreground leading-relaxed">
               {message}
             </p>
           </div>
           <div className="space-y-3 text-sm text-muted-foreground">
             <p>
-              We&apos;re working to restore the connection. You can try refreshing the page in a moment or send email to our support{" "}
+              We&apos;re working to restore the connection. You can try
+              refreshing the page in a moment or send email to our support{" "}
               <Link
                 href="mailto:hi@poke.community"
                 target="_blank"
@@ -208,7 +219,7 @@ function refineOutageCopy(rawMessage: string): string {
   }
 
   const networkCopy = rawMessage.match(
-    /(Our data service is temporarily unreachable[^.]*(?:\.)?)/
+    /(Our data service is temporarily unreachable[^.]*(?:\.)?)/,
   );
   if (networkCopy?.[0]) {
     return networkCopy[0].trim();

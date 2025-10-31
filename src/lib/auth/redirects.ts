@@ -23,7 +23,7 @@ function sanitizeRelativePath(value: string | null | undefined) {
 }
 
 export function parseRedirectParam(
-  value: string | string[] | undefined
+  value: string | string[] | undefined,
 ): string {
   if (Array.isArray(value)) {
     return sanitizeRelativePath(value[0]);
@@ -33,7 +33,7 @@ export function parseRedirectParam(
 }
 
 export function parseRedirectFormValue(
-  value: FormDataEntryValue | null
+  value: FormDataEntryValue | null,
 ): string {
   if (typeof value !== "string") {
     return FALLBACK_REDIRECT;

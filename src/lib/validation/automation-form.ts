@@ -21,10 +21,10 @@ export type AutomationFormParsed = {
 };
 
 export const automationSchema = z.object({
-  title: z.string().min(4, "Title must be at least 4 characters long.").max(
-    120,
-    "Title cannot exceed 120 characters."
-  ),
+  title: z
+    .string()
+    .min(4, "Title must be at least 4 characters long.")
+    .max(120, "Title cannot exceed 120 characters."),
   summary: z
     .string()
     .min(1, "Summary is required.")
@@ -49,7 +49,7 @@ export const emptyAutomationFormValues: AutomationFormValues = {
 };
 
 export function normalizeAutomationFormValues(
-  values: AutomationFormValues
+  values: AutomationFormValues,
 ): AutomationFormParsed {
   const title = values.title.trim();
   const summary = values.summary.trim();
@@ -71,9 +71,7 @@ export function normalizeAutomationFormValues(
   };
 }
 
-export function validateAutomationForm(
-  values: AutomationFormValues
-):
+export function validateAutomationForm(values: AutomationFormValues):
   | {
       success: true;
       data: AutomationFormParsed;
@@ -98,9 +96,7 @@ export function validateAutomationForm(
   const zodErrors = parsed.error.flatten().fieldErrors;
   const fieldErrors: AutomationFormFieldErrors = {};
 
-  for (const key of Object.keys(zodErrors) as Array<
-    keyof typeof zodErrors
-  >) {
+  for (const key of Object.keys(zodErrors) as Array<keyof typeof zodErrors>) {
     const issues = zodErrors[key];
     if (issues && issues.length) {
       fieldErrors[key as keyof AutomationFormValues] = issues[0];
@@ -115,7 +111,7 @@ export function validateAutomationForm(
 }
 
 export function formDataToAutomationFormValues(
-  formData: FormData
+  formData: FormData,
 ): AutomationFormValues {
   const getValue = (field: string) => {
     const value = formData.get(field);
@@ -132,7 +128,7 @@ export function formDataToAutomationFormValues(
 }
 
 export function parsedToFormValues(
-  parsed: AutomationFormParsed
+  parsed: AutomationFormParsed,
 ): AutomationFormValues {
   return {
     title: parsed.title,

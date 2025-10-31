@@ -11,7 +11,7 @@ type SupabaseContextValue = {
 };
 
 const SupabaseContext = createContext<SupabaseContextValue | undefined>(
-  undefined
+  undefined,
 );
 
 type ProviderProps = {

@@ -19,7 +19,7 @@ export function DeleteAutomationButton({
 
   const handleDelete = () => {
     const confirmed = window.confirm(
-      `Are you sure you want to delete "${automationTitle}"? This cannot be undone.`
+      `Are you sure you want to delete "${automationTitle}"? This cannot be undone.`,
     );
 
     if (!confirmed) {
@@ -34,9 +34,7 @@ export function DeleteAutomationButton({
         router.refresh();
       } catch (error) {
         console.error("Unable to delete automation", error);
-        window.alert(
-          "We couldn't delete that automation. Please try again."
-        );
+        window.alert("We couldn't delete that automation. Please try again.");
       }
     });
   };
@@ -53,4 +51,3 @@ export function DeleteAutomationButton({
     </Button>
   );
 }
-

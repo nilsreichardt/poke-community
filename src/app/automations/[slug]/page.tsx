@@ -66,11 +66,12 @@ export async function generateMetadata({
     "Explore setup details, prompts, and community sentiment for this poke.community automation.";
   const canonical = absoluteUrl(`/automations/${automation.slug}`);
   const ogImageUrl = absoluteUrl(
-    `/automations/${automation.slug}/opengraph-image`
+    `/automations/${automation.slug}/opengraph-image`,
   );
 
   const publishedTime = automation.created_at ?? undefined;
-  const modifiedTime = automation.updated_at ?? automation.created_at ?? undefined;
+  const modifiedTime =
+    automation.updated_at ?? automation.created_at ?? undefined;
 
   return {
     title: `${automation.title} — ${siteMetadata.shortName}`,
@@ -86,7 +87,9 @@ export async function generateMetadata({
       siteName: siteMetadata.name,
       publishedTime,
       modifiedTime,
-      authors: automation.public_profiles?.name ? [automation.public_profiles.name] : undefined,
+      authors: automation.public_profiles?.name
+        ? [automation.public_profiles.name]
+        : undefined,
       tags: automation.tags ?? undefined,
       images: [
         {
@@ -131,10 +134,7 @@ export default async function AutomationPage({ params }: AutomationPageProps) {
 
   return (
     <article className="space-y-10">
-      <AutomationJsonLd
-        automation={automation}
-        canonicalUrl={canonicalUrl}
-      />
+      <AutomationJsonLd automation={automation} canonicalUrl={canonicalUrl} />
       <section className="space-y-8 rounded-2xl border border-border bg-card/70 p-8 shadow-sm">
         <div className="flex flex-col gap-6 sm:flex-row sm:items-start sm:justify-between">
           <div className="space-y-4">
@@ -161,7 +161,11 @@ export default async function AutomationPage({ params }: AutomationPageProps) {
             {automation.tags?.length ? (
               <div className="flex flex-wrap gap-2">
                 {automation.tags.map((tag: string) => (
-                  <Badge key={tag} variant="outline" className="text-xs uppercase">
+                  <Badge
+                    key={tag}
+                    variant="outline"
+                    className="text-xs uppercase"
+                  >
                     #{tag}
                   </Badge>
                 ))}
@@ -191,7 +195,10 @@ export default async function AutomationPage({ params }: AutomationPageProps) {
             <div className="space-y-4">
               <ReactMarkdown
                 remarkPlugins={[remarkGfm, remarkBreaks]}
-                rehypePlugins={[rehypeRaw, [rehypeSanitize, markdownSanitizeSchema]]}
+                rehypePlugins={[
+                  rehypeRaw,
+                  [rehypeSanitize, markdownSanitizeSchema],
+                ]}
                 components={automationMarkdownComponents}
               >
                 {automation.description}
@@ -229,8 +236,7 @@ function AutomationJsonLd({
     headline: automation.title,
     abstract: automation.summary ?? undefined,
     datePublished: automation.created_at ?? undefined,
-    dateModified:
-      automation.updated_at ?? automation.created_at ?? undefined,
+    dateModified: automation.updated_at ?? automation.created_at ?? undefined,
     url: canonicalUrl,
     mainEntityOfPage: canonicalUrl,
     author: automation.public_profiles?.name

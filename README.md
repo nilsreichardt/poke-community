@@ -34,7 +34,6 @@ Community hub for sharing and discovering automations built with [Poke](https://
    ```
 
    Required variables:
-
    - `NEXT_PUBLIC_SITE_URL` – base URL of the deployed site (e.g. http://localhost:3000)
    - `NEXT_PUBLIC_SUPABASE_URL` – Supabase project URL
    - `NEXT_PUBLIC_SUPABASE_ANON_KEY` – Supabase anon key

@@ -29,7 +29,15 @@ type AutomationWithRelations = AutomationRecord & {
 
 export type AutomationForEditing = Pick<
   AutomationRecord,
-  "id" | "title" | "summary" | "description" | "prompt" | "tags" | "slug" | "updated_at" | "created_at"
+  | "id"
+  | "title"
+  | "summary"
+  | "description"
+  | "prompt"
+  | "tags"
+  | "slug"
+  | "updated_at"
+  | "created_at"
 >;
 
 type ListAutomationsOptions = {
@@ -185,7 +193,7 @@ export const getCurrentUser = cache(async () => {
 });
 
 export async function getAutomations(
-  options: ListAutomationsOptions = {}
+  options: ListAutomationsOptions = {},
 ): Promise<AutomationWithRelations[]> {
   const user = await getCurrentUser();
 
@@ -232,14 +240,14 @@ export async function getAutomations(
           : null,
       )
       .filter(
-        (item): item is { id: string; vote_total: number; recent_votes: number } =>
+        (
+          item,
+        ): item is { id: string; vote_total: number; recent_votes: number } =>
           item !== null,
       );
 
     const ids = ranked.map((item) => item.id);
-    const statsMap = new Map(
-      ranked.map((item) => [item.id, item] as const),
-    );
+    const statsMap = new Map(ranked.map((item) => [item.id, item] as const));
 
     const { data, error } = await supabase
       .from("automations")
@@ -248,23 +256,18 @@ export async function getAutomations(
       .returns<AutomationRowWithProfile[]>();
 
     if (error) {
-      throw new Error(
-        formatSupabaseError("Unable to load automations", error),
-      );
+      throw new Error(formatSupabaseError("Unable to load automations", error));
     }
 
     const rows = data ?? [];
     const automationsById = new Map(rows.map((row) => [row.id, row] as const));
-    const userVotes = await getUserVotesMap(
-      supabase,
-      ids,
-      Boolean(user?.id),
-    );
+    const userVotes = await getUserVotesMap(supabase, ids, Boolean(user?.id));
 
     return ids
       .map((id) => automationsById.get(id))
       .filter(
-        (row): row is AutomationRowWithProfile => row !== undefined && row !== null,
+        (row): row is AutomationRowWithProfile =>
+          row !== undefined && row !== null,
       )
       .map<AutomationWithRelations>((row) => {
         const stats = statsMap.get(row.id) ?? {
@@ -298,13 +301,10 @@ export async function getAutomations(
 
   query = query.order("created_at", { ascending: false });
 
-  const { data, error } =
-    await query.returns<AutomationRowWithProfile[]>();
+  const { data, error } = await query.returns<AutomationRowWithProfile[]>();
 
   if (error) {
-    throw new Error(
-      formatSupabaseError("Unable to load automations", error),
-    );
+    throw new Error(formatSupabaseError("Unable to load automations", error));
   }
 
   const rows = data ?? [];
@@ -372,7 +372,7 @@ export async function getAutomationsForCurrentUser(): Promise<
 }
 
 export async function getAutomationForEditing(
-  automationId: string
+  automationId: string,
 ): Promise<AutomationForEditing | null> {
   const user = await getCurrentUser();
 
@@ -385,15 +385,13 @@ export async function getAutomationForEditing(
   const { data, error } = await supabase
     .from("automations")
     .select(
-      "id, title, summary, description, prompt, tags, slug, updated_at, created_at, user_id"
+      "id, title, summary, description, prompt, tags, slug, updated_at, created_at, user_id",
     )
     .eq("id", automationId)
     .maybeSingle();
 
   if (error) {
-    throw new Error(
-      formatSupabaseError("Unable to load automation", error)
-    );
+    throw new Error(formatSupabaseError("Unable to load automation", error));
   }
 
   if (!data || data.user_id !== user.id) {
@@ -407,7 +405,7 @@ export async function getAutomationForEditing(
 }
 
 export async function getAutomationBySlug(
-  slug: string
+  slug: string,
 ): Promise<(AutomationWithRelations & { user_id: string }) | null> {
   const user = await getCurrentUser();
 
@@ -420,12 +418,12 @@ export async function getAutomationBySlug(
     .maybeSingle();
 
   if (error) {
-    throw new Error(
-      formatSupabaseError("Unable to load automation", error),
-    );
+    throw new Error(formatSupabaseError("Unable to load automation", error));
   }
 
-  const automation = data as (AutomationRowWithProfile & { user_id: string }) | null;
+  const automation = data as
+    | (AutomationRowWithProfile & { user_id: string })
+    | null;
 
   if (!automation) {
     return null;
@@ -460,10 +458,7 @@ export async function getTrendingAutomations(limit = 6) {
 
   if (rankingError) {
     throw new Error(
-      formatSupabaseError(
-        "Unable to load trending automations",
-        rankingError
-      )
+      formatSupabaseError("Unable to load trending automations", rankingError),
     );
   }
 
@@ -482,7 +477,9 @@ export async function getTrendingAutomations(limit = 6) {
         : null,
     )
     .filter(
-      (item): item is { id: string; vote_total: number; recent_votes: number } =>
+      (
+        item,
+      ): item is { id: string; vote_total: number; recent_votes: number } =>
         item !== null,
     );
 
@@ -509,15 +506,9 @@ export async function getTrendingAutomations(limit = 6) {
   }
 
   const rows = automationRows ?? [];
-  const automationMap = new Map(
-    rows.map((row) => [row.id, row] as const)
-  );
+  const automationMap = new Map(rows.map((row) => [row.id, row] as const));
 
-  const userVotes = await getUserVotesMap(
-    supabase,
-    ids,
-    Boolean(user?.id),
-  );
+  const userVotes = await getUserVotesMap(supabase, ids, Boolean(user?.id));
 
   return ranked
     .map(({ id }) => automationMap.get(id))
@@ -543,9 +534,7 @@ type AutomationSlugSummary = {
   updated_at: string | null;
 };
 
-export async function listAutomationSlugs(): Promise<
-  AutomationSlugSummary[]
-> {
+export async function listAutomationSlugs(): Promise<AutomationSlugSummary[]> {
   const supabase = createSupabaseServiceRoleClient();
 
   const { data, error } = await supabase
@@ -557,7 +546,7 @@ export async function listAutomationSlugs(): Promise<
 
   if (error) {
     throw new Error(
-      formatSupabaseError("Unable to list automation slugs", error)
+      formatSupabaseError("Unable to list automation slugs", error),
     );
   }
 
@@ -579,9 +568,7 @@ export async function getSubscriptionPreferences() {
     .eq("user_id", user.id);
 
   if (error) {
-    throw new Error(
-      formatSupabaseError("Unable to load subscriptions", error)
-    );
+    throw new Error(formatSupabaseError("Unable to load subscriptions", error));
   }
 
   const map = new Map<SubscriptionType, boolean>();

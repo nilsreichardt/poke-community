@@ -3,7 +3,12 @@
 import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { Switch } from "@/components/ui/switch";
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 import { toggleSubscriptionAction } from "@/app/actions/automation-actions";
 
 type CompactSubscriptionSwitchProps = {
@@ -42,16 +47,24 @@ function CompactSubscriptionSwitch({
     });
   };
 
-  const tooltipMessage = type === "new"
-    ? "Get notifications about new automations"
-    : "Get notifications about trending automations";
+  const tooltipMessage =
+    type === "new"
+      ? "Get notifications about new automations"
+      : "Get notifications about trending automations";
 
   return (
     <Tooltip>
       <TooltipTrigger asChild>
         <label className="flex items-center gap-2 cursor-pointer">
-          <span className="text-sm font-medium leading-none flex-1">{label}</span>
-          <Switch checked={checked} onCheckedChange={handleToggle} disabled={isPending} className="cursor-pointer" />
+          <span className="text-sm font-medium leading-none flex-1">
+            {label}
+          </span>
+          <Switch
+            checked={checked}
+            onCheckedChange={handleToggle}
+            disabled={isPending}
+            className="cursor-pointer"
+          />
         </label>
       </TooltipTrigger>
       <TooltipContent>
@@ -73,9 +86,7 @@ export function CompactNotificationSubscription({
   return (
     <TooltipProvider>
       <div className="space-y-2">
-        <p className="text-xs text-muted-foreground">
-          Email notifications
-        </p>
+        <p className="text-xs text-muted-foreground">Email notifications</p>
         <div className="space-y-2 items-end">
           <CompactSubscriptionSwitch
             type="new"

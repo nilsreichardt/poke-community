@@ -8,7 +8,9 @@ type AutoEnableSubscriptionProps = {
   isSignedIn: boolean;
 };
 
-export function AutoEnableSubscription({ isSignedIn }: AutoEnableSubscriptionProps) {
+export function AutoEnableSubscription({
+  isSignedIn,
+}: AutoEnableSubscriptionProps) {
   const router = useRouter();
   const searchParams = useSearchParams();
 

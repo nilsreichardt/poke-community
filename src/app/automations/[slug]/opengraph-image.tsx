@@ -37,7 +37,7 @@ export default async function AutomationOgImage({
     automation.summary ??
       automation.description?.replace(/\s+/g, " ").trim() ??
       "",
-    180
+    180,
   );
 
   return new ImageResponse(
@@ -183,7 +183,7 @@ export default async function AutomationOgImage({
         </div>
       </div>
     ),
-    { ...size }
+    { ...size },
   );
 }
 
@@ -207,7 +207,7 @@ function renderFallback(message: string) {
         {message}
       </div>
     ),
-    { ...size }
+    { ...size },
   );
 }
 

@@ -86,22 +86,24 @@ export default function OgImage() {
               to help you move faster with Poke.
             </p>
             <div style={{ display: "flex", gap: 16, flexWrap: "wrap" }}>
-              {["Trending automations", "Setup-ready prompts", "Real-world playbooks"].map(
-                (label) => (
-                  <span
-                    key={label}
-                    style={{
-                      padding: "10px 20px",
-                      borderRadius: 999,
-                      backgroundColor: "rgba(15, 23, 42, 0.65)",
-                      border: "1px solid rgba(148, 163, 184, 0.4)",
-                      fontSize: 28,
-                    }}
-                  >
-                    {label}
-                  </span>
-                )
-              )}
+              {[
+                "Trending automations",
+                "Setup-ready prompts",
+                "Real-world playbooks",
+              ].map((label) => (
+                <span
+                  key={label}
+                  style={{
+                    padding: "10px 20px",
+                    borderRadius: 999,
+                    backgroundColor: "rgba(15, 23, 42, 0.65)",
+                    border: "1px solid rgba(148, 163, 184, 0.4)",
+                    fontSize: 28,
+                  }}
+                >
+                  {label}
+                </span>
+              ))}
             </div>
           </div>
         </div>
@@ -109,6 +111,6 @@ export default function OgImage() {
     ),
     {
       ...size,
-    }
+    },
   );
 }

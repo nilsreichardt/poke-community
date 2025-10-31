@@ -21,7 +21,7 @@ type UnsubscribeResult =
 
 async function unsubscribeSubscription(
   subscriptionId: string,
-  type: SubscriptionType
+  type: SubscriptionType,
 ): Promise<UnsubscribeResult> {
   const supabase = createSupabaseServiceRoleClient();
 
@@ -105,10 +105,7 @@ function parseRequest(req: NextRequest, params: RouteParams) {
   return { token, type, subscriptionId };
 }
 
-export async function GET(
-  req: NextRequest,
-  context: RouteContext
-) {
+export async function GET(req: NextRequest, context: RouteContext) {
   const params = await context.params;
   const { subscriptionId, type, token } = parseRequest(req, params);
   let tokenIsValid = false;
@@ -118,17 +115,17 @@ export async function GET(
       subscriptionId &&
         type &&
         token &&
-        verifyUnsubscribeToken(subscriptionId, type, token)
+        verifyUnsubscribeToken(subscriptionId, type, token),
     );
   } catch (error) {
     console.error(
       "Unable to validate unsubscribe token",
-      error instanceof Error ? error : String(error)
+      error instanceof Error ? error : String(error),
     );
     return respondWithHtml(
       500,
       "Something went wrong",
-      "We were unable to verify your unsubscribe link. Please try again later."
+      "We were unable to verify your unsubscribe link. Please try again later.",
     );
   }
 
@@ -136,7 +133,7 @@ export async function GET(
     return respondWithHtml(
       400,
       "Invalid unsubscribe link",
-      "The unsubscribe link appears to be invalid or has expired. Please request a new unsubscribe email or adjust your notification preferences from your profile."
+      "The unsubscribe link appears to be invalid or has expired. Please request a new unsubscribe email or adjust your notification preferences from your profile.",
     );
   }
 
@@ -144,7 +141,7 @@ export async function GET(
     return respondWithHtml(
       400,
       "Unknown subscription",
-      "We could not determine which subscription you tried to unsubscribe from."
+      "We could not determine which subscription you tried to unsubscribe from.",
     );
   }
 
@@ -154,7 +151,7 @@ export async function GET(
     return respondWithHtml(
       500,
       "Something went wrong",
-      "We were unable to process your unsubscribe request. Please try again later or contact support."
+      "We were unable to process your unsubscribe request. Please try again later or contact support.",
     );
   }
 
@@ -162,7 +159,7 @@ export async function GET(
     return respondWithHtml(
       404,
       "Subscription not found",
-      "We could not find an active subscription linked to this unsubscribe link. It may have already been removed."
+      "We could not find an active subscription linked to this unsubscribe link. It may have already been removed.",
     );
   }
 
@@ -173,10 +170,7 @@ export async function GET(
   return respondWithHtml(200, "You are unsubscribed", message);
 }
 
-export async function POST(
-  req: NextRequest,
-  context: RouteContext
-) {
+export async function POST(req: NextRequest, context: RouteContext) {
   const params = await context.params;
   const { subscriptionId, type, token } = parseRequest(req, params);
   let tokenIsValid = false;
@@ -186,12 +180,12 @@ export async function POST(
       subscriptionId &&
         type &&
         token &&
-        verifyUnsubscribeToken(subscriptionId, type, token)
+        verifyUnsubscribeToken(subscriptionId, type, token),
     );
   } catch (error) {
     console.error(
       "Unable to validate unsubscribe token",
-      error instanceof Error ? error : String(error)
+      error instanceof Error ? error : String(error),
     );
     return respondWithEmpty(500);
   }

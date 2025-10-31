@@ -34,20 +34,26 @@ export function VoteControls({
     },
     (state, newVote) => {
       const toggled =
-        state.userVote === newVote ? { userVote: 0, total: state.total - newVote } : {
-          userVote: newVote,
-          total: state.total - state.userVote + newVote,
-        };
+        state.userVote === newVote
+          ? { userVote: 0, total: state.total - newVote }
+          : {
+              userVote: newVote,
+              total: state.total - state.userVote + newVote,
+            };
       return toggled;
-    }
+    },
   );
   const [isPending, startTransition] = useTransition();
 
   const handleVote = (value: 1 | -1) => {
     if (!user) {
       const searchString = searchParams.toString();
-      const redirectTarget = searchString ? `${pathname}?${searchString}` : pathname;
-      router.push(`/auth/sign-in?redirectTo=${encodeURIComponent(redirectTarget)}`);
+      const redirectTarget = searchString
+        ? `${pathname}?${searchString}`
+        : pathname;
+      router.push(
+        `/auth/sign-in?redirectTo=${encodeURIComponent(redirectTarget)}`,
+      );
       return;
     }
 
