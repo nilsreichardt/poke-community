@@ -4,7 +4,12 @@ import Link from "next/link";
 import { usePathname, useSearchParams } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { useSupabase } from "@/components/providers/supabase-provider";
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { signOutAction } from "@/app/actions/automation-actions";
 import { useFormStatus } from "react-dom";
@@ -32,7 +37,10 @@ export function SiteHeader() {
   return (
     <header className="border-b border-border bg-background/80 backdrop-blur">
       <div className="mx-auto flex max-w-6xl items-center justify-between gap-4 px-4 py-4 sm:px-6">
-        <Link href="/" className="flex items-center gap-2 text-lg font-semibold">
+        <Link
+          href="/"
+          className="flex items-center gap-2 text-lg font-semibold"
+        >
           poke.community
         </Link>
         <nav className="hidden items-center gap-5 text-sm font-medium md:flex">
@@ -45,8 +53,9 @@ export function SiteHeader() {
               <Link
                 key={item.href}
                 href={item.href}
-                className={`flex items-center transition hover:text-primary ${isActive ? "text-primary" : "text-muted-foreground"
-                  }`}
+                className={`flex items-center transition hover:text-primary ${
+                  isActive ? "text-primary" : "text-muted-foreground"
+                }`}
               >
                 <item.icon className="h-5 w-5 mr-2" aria-hidden="true" />
                 <span>{item.label}</span>
@@ -80,7 +89,8 @@ function UserMenu({ redirectTo }: UserMenuProps) {
   const { user } = useSupabase();
   const pathname = usePathname();
   const searchParams = useSearchParams();
-  const dropdownRedirect = redirectTo || buildRedirectTarget(pathname, searchParams);
+  const dropdownRedirect =
+    redirectTo || buildRedirectTarget(pathname, searchParams);
   const email = user?.email ?? "";
   const fallback = email ? email.slice(0, 2).toUpperCase() : "PC";
 
@@ -91,9 +101,7 @@ function UserMenu({ redirectTo }: UserMenuProps) {
           <Avatar className="h-8 w-8">
             <AvatarFallback>{fallback}</AvatarFallback>
           </Avatar>
-          <span className="hidden text-sm font-medium sm:inline">
-            {email}
-          </span>
+          <span className="hidden text-sm font-medium sm:inline">{email}</span>
         </Button>
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end" className="w-56">
@@ -129,7 +137,7 @@ function SubmitButton() {
 
 function buildRedirectTarget(
   pathname: string,
-  searchParams: ReturnType<typeof useSearchParams>
+  searchParams: ReturnType<typeof useSearchParams>,
 ) {
   const searchString = searchParams?.toString?.() ?? "";
   return searchString ? `${pathname}?${searchString}` : pathname || "/";

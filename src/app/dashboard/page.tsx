@@ -34,7 +34,9 @@ export default async function DashboardPage() {
           Your automations
         </h1>
         <p className="text-sm text-muted-foreground">
-          Review everything you have shared with the community. You can open an automation to double-check the prompt or remove anything that is no longer relevant.
+          Review everything you have shared with the community. You can open an
+          automation to double-check the prompt or remove anything that is no
+          longer relevant.
         </p>
       </header>
 
@@ -45,7 +47,8 @@ export default async function DashboardPage() {
               You have not shared an automation yet
             </h2>
             <p className="text-muted-foreground">
-              Submit your first automation to make it appear here and help the community.
+              Submit your first automation to make it appear here and help the
+              community.
             </p>
           </div>
           <Button asChild>
@@ -100,9 +103,7 @@ export default async function DashboardPage() {
                   </div>
                   <div className="flex items-center gap-3">
                     <Button asChild size="sm" variant="outline">
-                      <Link href={`/automations/${automation.slug}`}>
-                        View
-                      </Link>
+                      <Link href={`/automations/${automation.slug}`}>View</Link>
                     </Button>
                     <Button asChild size="sm" variant="outline">
                       <Link href={`/dashboard/${automation.id}/edit`}>

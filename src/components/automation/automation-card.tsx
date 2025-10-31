@@ -23,9 +23,7 @@ type AutomationCardProps = {
 
 export function AutomationCard({ automation }: AutomationCardProps) {
   const [isHeaderHover, setIsHeaderHover] = useState(false);
-  const ownerName =
-    automation.public_profiles?.name ??
-    "Anonymous member";
+  const ownerName = automation.public_profiles?.name ?? "Anonymous member";
   const createdAt = automation.created_at
     ? new Date(automation.created_at)
     : null;
@@ -68,13 +66,16 @@ export function AutomationCard({ automation }: AutomationCardProps) {
           {automation.tags?.length ? (
             <div className="flex flex-wrap gap-2">
               {automation.tags.map((tag) => (
-                 <Badge key={tag} variant="secondary" className="text-xs uppercase">
-                {"#" + tag}
-              </Badge>
+                <Badge
+                  key={tag}
+                  variant="secondary"
+                  className="text-xs uppercase"
+                >
+                  {"#" + tag}
+                </Badge>
               ))}
             </div>
           ) : null}
-          
         </CardHeader>
       </Link>
       <CardFooter className="mt-auto flex items-center justify-between gap-4 border-t border-border/60 bg-muted/40 pb-6">

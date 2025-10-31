@@ -17,7 +17,7 @@ export function DeleteAccountButton() {
         }
 
         const confirmed = window.confirm(
-          "This will permanently delete your account and all associated data. This action cannot be undone. Are you absolutely sure?"
+          "This will permanently delete your account and all associated data. This action cannot be undone. Are you absolutely sure?",
         );
 
         if (!confirmed) {

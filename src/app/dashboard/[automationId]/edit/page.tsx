@@ -44,7 +44,8 @@ export default async function EditAutomationPage({
               Edit automation
             </h1>
             <p className="text-sm text-muted-foreground">
-              Update the details below and publish your changes when you are ready.
+              Update the details below and publish your changes when you are
+              ready.
             </p>
           </div>
           <div className="flex items-center gap-2">

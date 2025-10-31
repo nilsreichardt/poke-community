@@ -2,8 +2,7 @@ import { createSupabaseServiceRoleClient } from "@/lib/supabase/server";
 import { resendClient } from "./resend";
 import { createUnsubscribeUrl } from "./unsubscribe";
 
-const SITE_URL =
-  process.env.NEXT_PUBLIC_SITE_URL ?? "https://poke.community";
+const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL ?? "https://poke.community";
 
 type AutomationAnnouncementInput = {
   automationTitle: string;
@@ -61,9 +60,9 @@ export async function sendAutomationAnnouncement(
       })
       .filter(
         (
-          subscription
+          subscription,
         ): subscription is { email: string; unsubscribeUrl: string } =>
-          subscription !== null
+          subscription !== null,
       ) ?? [];
 
   if (recipients.length === 0) {
@@ -82,16 +81,16 @@ export async function sendAutomationAnnouncement(
           html: buildAnnouncementHtml(
             input.automationTitle,
             automationUrl,
-            unsubscribeUrl
+            unsubscribeUrl,
           ),
           text: buildAnnouncementText(
             input.automationTitle,
             automationUrl,
-            unsubscribeUrl
+            unsubscribeUrl,
           ),
           headers: buildUnsubscribeHeaders(unsubscribeUrl),
         });
-      })
+      }),
     );
   } catch (sendError) {
     console.error("Unable to send automation announcement", sendError);
@@ -101,7 +100,7 @@ export async function sendAutomationAnnouncement(
 function buildAnnouncementHtml(
   title: string,
   automationUrl: string,
-  unsubscribeUrl: string
+  unsubscribeUrl: string,
 ) {
   return [
     `<p>Hey community 👋</p>`,
@@ -117,7 +116,7 @@ function buildAnnouncementHtml(
 function buildAnnouncementText(
   title: string,
   automationUrl: string,
-  unsubscribeUrl: string
+  unsubscribeUrl: string,
 ) {
   return [
     `Hey community,`,
@@ -134,9 +133,7 @@ function buildAnnouncementText(
   ].join("\n");
 }
 
-export async function sendTrendingDigest({
-  automations,
-}: TrendingDigestInput) {
+export async function sendTrendingDigest({ automations }: TrendingDigestInput) {
   if (!resendClient || automations.length === 0) {
     return;
   }
@@ -171,9 +168,9 @@ export async function sendTrendingDigest({
       })
       .filter(
         (
-          subscription
+          subscription,
         ): subscription is { email: string; unsubscribeUrl: string } =>
-          subscription !== null
+          subscription !== null,
       ) ?? [];
 
   if (!recipients.length) {
@@ -198,7 +195,7 @@ export async function sendTrendingDigest({
           text: buildTrendingText(automations, unsubscribeUrl),
           headers: buildUnsubscribeHeaders(unsubscribeUrl),
         });
-      })
+      }),
     );
   } catch (sendError) {
     console.error("Unable to send trending digest", sendError);
@@ -218,14 +215,14 @@ function buildTrendingHtml(listItems: string, unsubscribeUrl: string) {
 
 function buildTrendingText(
   automations: TrendingDigestInput["automations"],
-  unsubscribeUrl: string
+  unsubscribeUrl: string,
 ) {
   return [
     `Here are the automations people loved this week:`,
     ``,
     ...automations.map(
       (automation, index) =>
-        `${index + 1}. ${automation.title} (${automation.vote_total} votes)`
+        `${index + 1}. ${automation.title} (${automation.vote_total} votes)`,
     ),
     ``,
     `Submit your own automations or vote on others at poke.community.`,

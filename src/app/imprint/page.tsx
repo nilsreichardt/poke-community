@@ -87,12 +87,12 @@ export default function ImprintPage() {
             general legislation pursuant to § 7 Para. 1 TMG. However, according
             to §§ 8 to 10 TMG, we are not obliged as a service provider to
             monitor transmitted or stored third-party information or to
-            investigate circumstances that indicate illegal activity. Obligations
-            to remove or block the use of information in accordance with general
-            laws remain unaffected. However, liability in this respect is only
-            possible from the point in time at which a concrete infringement of
-            the law becomes known. If we become aware of such infringements, we
-            will remove this content immediately.
+            investigate circumstances that indicate illegal activity.
+            Obligations to remove or block the use of information in accordance
+            with general laws remain unaffected. However, liability in this
+            respect is only possible from the point in time at which a concrete
+            infringement of the law becomes known. If we become aware of such
+            infringements, we will remove this content immediately.
           </p>
         </div>
 

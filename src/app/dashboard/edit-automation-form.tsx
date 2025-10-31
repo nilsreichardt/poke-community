@@ -47,7 +47,7 @@ export function EditAutomationForm({ automation }: EditAutomationFormProps) {
       prompt: automation.prompt ?? "",
       tags: Array.isArray(automation.tags) ? automation.tags.join(", ") : "",
     }),
-    [automation]
+    [automation],
   );
 
   const initialState = useMemo(
@@ -58,13 +58,16 @@ export function EditAutomationForm({ automation }: EditAutomationFormProps) {
       fieldErrors: {},
       slug: automation.slug,
     }),
-    [initialValues, automation.slug]
+    [initialValues, automation.slug],
   );
 
-  const [state, formAction] = useActionState(updateAutomationAction, initialState);
+  const [state, formAction] = useActionState(
+    updateAutomationAction,
+    initialState,
+  );
   const [formValues, setFormValues] = useState(initialValues);
   const [fieldErrors, setFieldErrors] = useState<AutomationFormFieldErrors>(
-    initialState.fieldErrors
+    initialState.fieldErrors,
   );
   const [submitError, setSubmitError] = useState<string | null>(null);
   const [touchedFields, setTouchedFields] = useState(INITIAL_TOUCHED_STATE);
@@ -132,13 +135,12 @@ export function EditAutomationForm({ automation }: EditAutomationFormProps) {
       }
     };
 
-  const handleBlur =
-    (field: keyof AutomationFormValues) => () => {
-      setTouchedFields((prev) => ({
-        ...prev,
-        [field]: true,
-      }));
-    };
+  const handleBlur = (field: keyof AutomationFormValues) => () => {
+    setTouchedFields((prev) => ({
+      ...prev,
+      [field]: true,
+    }));
+  };
 
   const handleSubmit = (event: FormEvent<HTMLFormElement>) => {
     const validation = validateAutomationForm(formValues);
@@ -248,7 +250,8 @@ export function EditAutomationForm({ automation }: EditAutomationFormProps) {
 
       <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <p className="text-xs text-muted-foreground">
-          Need to revert your edits? You can always make more changes or delete the automation later.
+          Need to revert your edits? You can always make more changes or delete
+          the automation later.
         </p>
         <SubmitButton />
       </div>

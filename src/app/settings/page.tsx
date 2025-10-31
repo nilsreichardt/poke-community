@@ -1,5 +1,8 @@
 import { redirect } from "next/navigation";
-import { getCurrentUser, getSubscriptionPreferences } from "@/lib/data/automations";
+import {
+  getCurrentUser,
+  getSubscriptionPreferences,
+} from "@/lib/data/automations";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 import { deleteAccountAction } from "@/app/actions/automation-actions";
 import { SubscriptionSwitch } from "./subscription-switch";
@@ -70,7 +73,8 @@ export default async function SettingsPage() {
           <NameForm initialName={profileName} />
           <hr className="border-t border-border/20" />
           <p className="text-sm text-muted-foreground">
-            Deleting your account removes your automations, votes, and email preferences immediately. This cannot be undone.
+            Deleting your account removes your automations, votes, and email
+            preferences immediately. This cannot be undone.
           </p>
           <form action={deleteAccountAction}>
             <DeleteAccountButton />

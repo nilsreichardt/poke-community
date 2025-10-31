@@ -1,6 +1,12 @@
-'use client';
+"use client";
 
-import { type ChangeEvent, type FormEvent, useCallback, useEffect, useState } from "react";
+import {
+  type ChangeEvent,
+  type FormEvent,
+  useCallback,
+  useEffect,
+  useState,
+} from "react";
 import { usePathname, useRouter } from "next/navigation";
 
 import { Button } from "@/components/ui/button";
@@ -62,7 +68,10 @@ export function SearchForm({ defaultQuery, sort }: SearchFormProps) {
   );
 
   return (
-    <form className="flex w-full flex-col gap-3 sm:flex-row" onSubmit={handleSubmit}>
+    <form
+      className="flex w-full flex-col gap-3 sm:flex-row"
+      onSubmit={handleSubmit}
+    >
       <Input
         name="q"
         placeholder="Search by title, description, prompt or tags"
