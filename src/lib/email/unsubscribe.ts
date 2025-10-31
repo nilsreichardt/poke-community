@@ -1,4 +1,4 @@
-import { createHmac } from "node:crypto";
+import { createHmac, timingSafeEqual } from "node:crypto";
 
 const SITE_URL =
   process.env.NEXT_PUBLIC_SITE_URL ?? "https://poke.community";
@@ -62,5 +62,18 @@ export function verifyUnsubscribeToken(
     type as SubscriptionType
   );
 
-  return expectedToken === token;
+  if (token.length !== expectedToken.length) {
+    return false;
+  }
+
+  try {
+    const provided = Buffer.from(token, "hex");
+    const expected = Buffer.from(expectedToken, "hex");
+    return (
+      provided.length === expected.length &&
+      timingSafeEqual(provided, expected)
+    );
+  } catch {
+    return false;
+  }
 }
