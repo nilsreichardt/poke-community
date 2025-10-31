@@ -241,19 +241,16 @@ export type Database = {
       public_profiles: {
         Row: {
           avatar_url: string | null
-          created_at: string | null
           id: string | null
           name: string | null
         }
         Insert: {
           avatar_url?: string | null
-          created_at?: string | null
           id?: string | null
           name?: string | null
         }
         Update: {
           avatar_url?: string | null
-          created_at?: string | null
           id?: string | null
           name?: string | null
         }

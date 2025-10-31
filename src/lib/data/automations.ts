@@ -17,11 +17,11 @@ type ProfileRowSubset = {
 };
 
 type AutomationRowWithProfile = AutomationRecord & {
-  profiles: ProfileRowSubset | null;
+  public_profiles: ProfileRowSubset | null;
 };
 
 type AutomationWithRelations = AutomationRecord & {
-  profiles: ProfileRowSubset | null;
+  public_profiles: ProfileRowSubset | null;
   vote_total: number;
   recent_votes?: number;
   user_vote?: number;
@@ -243,7 +243,7 @@ export async function getAutomations(
 
     const { data, error } = await supabase
       .from("automations")
-      .select("*, profiles(id, name, avatar_url)")
+      .select("*, public_profiles(id, name, avatar_url)")
       .in("id", ids)
       .returns<AutomationRowWithProfile[]>();
 
@@ -283,7 +283,7 @@ export async function getAutomations(
 
   let query = supabase
     .from("automations")
-    .select("*, profiles(id, name, avatar_url)");
+    .select("*, public_profiles(id, name, avatar_url)");
 
   if (options.search) {
     const likeValue = `%${options.search}%`;
@@ -340,7 +340,7 @@ export async function getAutomationsForCurrentUser(): Promise<
 
   const { data, error } = await supabase
     .from("automations")
-    .select("*, profiles(id, name, avatar_url)")
+    .select("*, public_profiles(id, name, avatar_url)")
     .eq("user_id", user.id)
     .order("created_at", { ascending: false })
     .returns<AutomationRowWithProfile[]>();
@@ -415,7 +415,7 @@ export async function getAutomationBySlug(
 
   const { data, error } = await supabase
     .from("automations")
-    .select("*, profiles(id, name, avatar_url)")
+    .select("*, public_profiles(id, name, avatar_url)")
     .eq("slug", slug)
     .maybeSingle();
 
@@ -495,7 +495,7 @@ export async function getTrendingAutomations(limit = 6) {
 
   const { data: automationRows, error: automationsError } = await supabase
     .from("automations")
-    .select("*, profiles(id, name, avatar_url)")
+    .select("*, public_profiles(id, name, avatar_url)")
     .in("id", ids)
     .returns<AutomationRowWithProfile[]>();
 

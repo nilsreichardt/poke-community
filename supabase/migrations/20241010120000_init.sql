@@ -10,7 +10,6 @@ create table if not exists public.profiles (
   created_at timestamptz default timezone('utc', now()),
   name text,
   avatar_url text,
-  bio text,
   email citext,
   unique(email)
 );
@@ -22,7 +21,7 @@ create table if not exists public.automations (
   title text not null,
   summary text,
   description text not null,
-  prompt text not null,
+  prompt text,
   slug text not null unique,
   tags text[],
   user_id uuid not null references public.profiles (id) on delete cascade,
@@ -48,15 +47,78 @@ create table if not exists public.subscriptions (
   unique (user_id, type)
 );
 
--- Triggers
-create trigger set_automations_updated_at
-  before update on public.automations
-  for each row execute procedure extensions.moddatetime(updated_at);
+-- Functions
+create function public.get_vote_statistics(target_ids uuid[] default null)
+returns table (
+  automation_id uuid,
+  vote_total bigint,
+  recent_votes bigint
+)
+language sql
+security definer
+set search_path = public
+as $$
+  select
+    v.automation_id,
+    coalesce(sum(v.value), 0) as vote_total,
+    coalesce(
+      sum(
+        case
+          when v.created_at >= timezone('utc', now()) - interval '7 days'
+            then v.value
+        end
+      ),
+      0
+    ) as recent_votes
+  from public.votes v
+  where target_ids is null
+    or array_length(target_ids, 1) is null
+    or v.automation_id = any(target_ids)
+  group by v.automation_id;
+$$;
+grant execute on function public.get_vote_statistics(uuid[]) to authenticated, anon, service_role;
+comment on function public.get_vote_statistics(uuid[]) is
+  'Returns aggregate vote totals (overall and trailing seven days) for the supplied automation IDs.';
+
+create function public.get_user_votes(target_ids uuid[] default null)
+returns table (automation_id uuid, value smallint)
+language sql
+security definer
+set search_path = public
+as $$
+  select automation_id, value
+  from public.votes
+  where auth.uid() is not null
+    and user_id = auth.uid()
+    and (
+      target_ids is null
+      or array_length(target_ids, 1) is null
+      or automation_id = any(target_ids)
+    );
+$$;
+grant execute on function public.get_user_votes(uuid[]) to authenticated, anon, service_role;
+comment on function public.get_user_votes(uuid[]) is
+  'Returns the calling user''s votes for the supplied automation IDs.';
+
+create or replace function prevent_email_update()
+returns trigger as $$
+begin
+  if new.email <> old.email then
+    raise exception 'Email cannot be changed manually';
+  end if;
+  return new;
+end;
+$$ language plpgsql;
 
 -- Views
 create or replace view public.public_profiles as
-select id, created_at, name, avatar_url, bio
-from public.profiles;
+  select id, name, avatar_url
+  from public.profiles p
+  where exists (
+    select *
+    from public.automations a
+    where p.id = a.user_id
+  );
 
 create or replace view public.automations_with_scores as
 select
@@ -70,12 +132,26 @@ select
   a.created_at,
   a.updated_at,
   a.user_id,
-  coalesce(sum(v.value), 0) as vote_total,
-  coalesce(sum(case when v.created_at >= timezone('utc', now()) - interval '7 days'
-                    then v.value end), 0) as recent_votes
+  coalesce(stats.vote_total, 0) as vote_total,
+  coalesce(stats.recent_votes, 0) as recent_votes
 from public.automations a
-left join public.votes v on v.automation_id = a.id
-group by a.id;
+left join lateral (
+  select
+    s.vote_total,
+    s.recent_votes
+  from public.get_vote_statistics(array[a.id]) s
+) stats on true;
+
+-- Triggers
+create trigger set_automations_updated_at
+  before update on public.automations
+  for each row execute procedure extensions.moddatetime(updated_at);
+
+create trigger prevent_email_update_trigger
+  before update on public.profiles
+  for each row
+  when (old.email is distinct from new.email)
+  execute function prevent_email_update();
 
 -- Indexes
 create index if not exists votes_automation_created_idx
@@ -94,12 +170,9 @@ alter table public.votes enable row level security;
 alter table public.subscriptions enable row level security;
 
 -- Profile policies
--- NOTE: Profiles are publicly readable to enable joins from automations.
--- Email is technically accessible but frontend code doesn't expose it.
--- For higher security requirements, consider a separate public_profile table.
-create policy "Profiles are viewable by everyone"
+create policy "Users can view their own profile"
   on public.profiles for select
-  using (true);
+  using (auth.uid() = id);
 
 create policy "Users can insert their profile"
   on public.profiles for insert
@@ -129,10 +202,6 @@ create policy "Users can delete their automations"
   using (auth.uid() = user_id);
 
 -- Vote policies
-create policy "Votes are visible"
-  on public.votes for select
-  using (true);
-
 create policy "Signed-in users can vote"
   on public.votes
   using (auth.uid() = user_id)
@@ -145,5 +214,11 @@ create policy "Signed-in users manage their subscriptions"
   with check (auth.uid() = user_id);
 
 -- Grants
-grant select on public.public_profiles to anon, authenticated;
-grant select on public.automations_with_scores to anon, authenticated;
+grant select on public.public_profiles to anon, authenticated, service_role;
+grant select on public.automations_with_scores to anon, authenticated, service_role;
+
+-- Limit vote visibility to aggregate-friendly fields
+revoke select on public.votes from anon, authenticated;
+grant select (id, automation_id, value, created_at) on public.votes to anon, authenticated;
+grant select (user_id) on public.votes to authenticated;
+grant select on public.votes to service_role;
