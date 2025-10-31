@@ -41,7 +41,7 @@ jobs:
         run: npm ci
 
       - name: Verify formatting
-        run: npm run lint -- --fix-type=layout --fix-dry-run
+        run: npm run format -- --check
 
   test:
     runs-on: ubuntu-latest
@@ -60,5 +60,3 @@ jobs:
 
       - name: Run unit tests
         run: npm run test:unit
-        env:
-          CI: true
