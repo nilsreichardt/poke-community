@@ -1,10 +1,13 @@
 "use client";
 
+/* eslint-disable react-hooks/refs -- Component uses ref-driven imperative textarea controls */
+
 import {
   useMemo,
   useRef,
   useState,
   type ComponentPropsWithoutRef,
+  type ChangeEvent,
   type ReactNode,
 } from "react";
 import ReactMarkdown from "react-markdown";
@@ -44,10 +47,18 @@ export function MarkdownEditor({
   previewEmptyLabel = "Nothing to preview yet.",
   ...props
 }: MarkdownEditorProps) {
+  const { onChange, ...textareaProps } = props;
   const textareaRef = useRef<HTMLTextAreaElement | null>(null);
   const [mode, setMode] = useState<EditorMode>("edit");
-  const currentValue =
-    value ?? textareaRef.current?.value ?? defaultValue ?? "";
+  const [internalValue, setInternalValue] = useState(defaultValue ?? "");
+  const textareaValue = value ?? internalValue;
+
+  const handleChange = (event: ChangeEvent<HTMLTextAreaElement>) => {
+    onChange?.(event);
+    if (value === undefined) {
+      setInternalValue(event.target.value);
+    }
+  };
 
   const previewMinHeight = useMemo(() => {
     const parsedRows =
@@ -266,12 +277,9 @@ export function MarkdownEditor({
             mode === "preview" ? "hidden" : "",
             className,
           )}
-          {...props}
-          {...(value !== undefined
-            ? { value }
-            : defaultValue !== undefined
-              ? { defaultValue }
-              : {})}
+          {...textareaProps}
+          value={textareaValue}
+          onChange={handleChange}
         />
         {mode === "preview" ? (
           <div
@@ -280,13 +288,13 @@ export function MarkdownEditor({
             )}
             style={{ minHeight: previewMinHeight }}
           >
-            {currentValue.trim().length ? (
+            {textareaValue.trim().length ? (
               <ReactMarkdown
                 remarkPlugins={remarkPlugins}
                 rehypePlugins={rehypePlugins}
                 components={automationMarkdownComponents}
               >
-                {currentValue}
+                {textareaValue}
               </ReactMarkdown>
             ) : (
               <p className="text-muted-foreground">{previewEmptyLabel}</p>

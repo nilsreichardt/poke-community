@@ -1,5 +1,7 @@
 "use client";
 
+/* eslint-disable react-hooks/set-state-in-effect -- Effects reset and hydrate form state from server responses */
+
 import {
   useActionState,
   useEffect,
